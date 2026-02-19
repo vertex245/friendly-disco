@@ -3,683 +3,1008 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Taskline — Your Personal Todo</title>
+<title>Taskline</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --ink: #1a1a2e;
-    --paper: #f5f0e8;
-    --cream: #ede7d9;
-    --accent: #c0392b;
-    --accent-light: #e74c3c;
-    --muted: #8a8070;
-    --border: #d4c9b8;
-    --card: #faf7f2;
-    --shadow: 0 2px 20px rgba(26,26,46,0.08);
-    --tag-bg: #eef4ff;
-    --tag-color: #2c5fad;
-    --tag-border: #c2d5f7;
-  }
+:root {
+  --ink: #1a1a2e;
+  --paper: #f5f0e8;
+  --cream: #ede7d9;
+  --accent: #c0392b;
+  --accent-light: #e74c3c;
+  --muted: #8a8070;
+  --border: #d4c9b8;
+  --card: #faf7f2;
+  --shadow: 0 2px 20px rgba(26,26,46,0.08);
+  --shadow-lg: 0 8px 40px rgba(26,26,46,0.16);
+  --tag-bg: #eef4ff;
+  --tag-color: #2c5fad;
+  --tag-border: #c2d5f7;
+  --notif-unread: #fff8f0;
+  --notif-unread-border: #f0c080;
+  --dm-me-bg: #1a1a2e;
+  --dm-me-text: #f5f0e8;
+  --dm-them-bg: #ede7d9;
+  --dm-them-text: #1a1a2e;
+}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--paper);
-    color: var(--ink);
-    min-height: 100vh;
-    font-size: 15px;
-  }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+}
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-  }
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
 
-  /* ─── AUTH ─── */
-  #auth-screen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-    position: relative;
-    z-index: 1;
-  }
+/* ════════ AUTH ════════ */
+#auth-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 2rem; position: relative; z-index: 1;
+}
+.auth-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 2px;
+  padding: 3rem 3.5rem; width: 100%; max-width: 420px;
+  box-shadow: var(--shadow), 6px 6px 0 var(--cream);
+}
+.brand { margin-bottom: 2.5rem; }
+.brand h1 { font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 700; letter-spacing: -0.5px; line-height: 1; }
+.brand span { color: var(--accent); }
+.brand p { color: var(--muted); font-size: 0.85rem; margin-top: 0.5rem; font-weight: 300; }
+.tab-row { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.8rem; }
+.tab-btn {
+  background: none; border: none; padding: 0.6rem 1.2rem 0.75rem;
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; color: var(--muted);
+  cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  letter-spacing: 0.04em; text-transform: uppercase; transition: color 0.2s, border-color 0.2s;
+}
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.form-group { margin-bottom: 1.2rem; }
+label { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.4rem; font-weight: 500; }
+input[type="email"], input[type="password"], input[type="text"], textarea {
+  width: 100%; background: var(--paper); border: 1px solid var(--border); border-radius: 2px;
+  padding: 0.75rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--ink);
+  outline: none; transition: border-color 0.2s; resize: none;
+}
+input:focus, textarea:focus { border-color: var(--accent); }
+.btn-primary {
+  width: 100%; background: var(--accent); color: #fff; border: none; padding: 0.85rem 1.5rem;
+  font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; letter-spacing: 0.06em;
+  text-transform: uppercase; cursor: pointer; border-radius: 2px; margin-top: 0.5rem; transition: background 0.2s, transform 0.1s;
+}
+.btn-primary:hover { background: var(--accent-light); }
+.btn-primary:active { transform: translateY(1px); }
+.divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: var(--muted); font-size: 0.8rem; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.btn-google {
+  width: 100%; background: #fff; border: 1px solid var(--border); padding: 0.8rem 1.5rem;
+  border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500;
+  color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  gap: 0.75rem; transition: background 0.2s, border-color 0.2s;
+}
+.btn-google:hover { background: var(--cream); border-color: var(--muted); }
+.error-msg {
+  background: #fdf0ef; border-left: 3px solid var(--accent); padding: 0.7rem 1rem;
+  font-size: 0.85rem; color: var(--accent); margin-bottom: 1rem; border-radius: 0 2px 2px 0; display: none;
+}
 
-  .auth-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 3rem 3.5rem;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: var(--shadow), 6px 6px 0 var(--cream);
-  }
+/* ════════ APP LAYOUT ════════ */
+#app-screen { display: none; min-height: 100vh; position: relative; z-index: 1; flex-direction: column; }
 
-  .brand { margin-bottom: 2.5rem; }
-  .brand h1 { font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 700; letter-spacing: -0.5px; line-height: 1; }
-  .brand span { color: var(--accent); }
-  .brand p { color: var(--muted); font-size: 0.85rem; margin-top: 0.5rem; font-weight: 300; }
+header {
+  background: var(--card); border-bottom: 1px solid var(--border); padding: 0.85rem 2rem;
+  display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 1.5rem; }
+.header-brand { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; cursor: pointer; }
+.header-brand span { color: var(--accent); }
 
-  .tab-row { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.8rem; }
-  .tab-btn {
-    background: none; border: none;
-    padding: 0.6rem 1.2rem 0.75rem;
-    font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;
-    color: var(--muted); cursor: pointer;
-    border-bottom: 2px solid transparent; margin-bottom: -1px;
-    letter-spacing: 0.04em; text-transform: uppercase;
-    transition: color 0.2s, border-color 0.2s;
-  }
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* Nav tabs in header */
+.header-nav { display: flex; gap: 0.25rem; }
+.nav-btn {
+  background: none; border: none; padding: 0.45rem 0.9rem; border-radius: 20px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; color: var(--muted);
+  cursor: pointer; transition: all 0.2s; position: relative;
+}
+.nav-btn:hover { background: var(--cream); color: var(--ink); }
+.nav-btn.active { background: var(--ink); color: #fff; }
+.nav-badge {
+  position: absolute; top: -3px; right: -3px;
+  background: var(--accent); color: #fff; border-radius: 10px;
+  font-size: 0.6rem; font-weight: 700; min-width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center; padding: 0 3px;
+  border: 2px solid var(--card);
+}
 
-  .form-group { margin-bottom: 1.2rem; }
-  label { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.4rem; font-weight: 500; }
+.user-info { display: flex; align-items: center; gap: 0.85rem; }
+.user-avatar {
+  width: 32px; height: 32px; background: var(--cream); border: 1px solid var(--border);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem; font-weight: 500; color: var(--muted); overflow: hidden; flex-shrink: 0;
+}
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-email { font-size: 0.8rem; color: var(--muted); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  input[type="email"], input[type="password"], input[type="text"] {
-    width: 100%; background: var(--paper); border: 1px solid var(--border); border-radius: 2px;
-    padding: 0.75rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--ink);
-    outline: none; transition: border-color 0.2s;
-  }
-  input:focus { border-color: var(--accent); }
+/* Notification bell */
+.notif-wrapper { position: relative; }
+.notif-bell {
+  background: none; border: 1px solid var(--border); border-radius: 2px;
+  width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative; transition: all 0.2s; color: var(--muted);
+}
+.notif-bell:hover { border-color: var(--accent); color: var(--accent); }
+.notif-bell.has-unread { border-color: var(--notif-unread-border); color: #b07000; background: var(--notif-unread); }
+.notif-badge {
+  position: absolute; top: -5px; right: -5px; background: var(--accent); color: #fff;
+  border-radius: 10px; font-size: 0.62rem; font-weight: 700; min-width: 17px; height: 17px;
+  display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 2px solid var(--card);
+  animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+.notif-panel {
+  position: absolute; top: calc(100% + 10px); right: 0; width: 340px; max-height: 440px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 4px;
+  box-shadow: var(--shadow-lg); display: none; flex-direction: column; overflow: hidden;
+  animation: dropDown 0.2s ease; z-index: 200;
+}
+.notif-panel.open { display: flex; }
+@keyframes dropDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.notif-header { padding: 0.9rem 1.2rem 0.7rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.notif-header h3 { font-family: 'Playfair Display', serif; font-size: 0.95rem; font-weight: 700; }
+.notif-mark-all { background: none; border: none; font-family: 'DM Sans', sans-serif; font-size: 0.74rem; color: var(--accent); cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 2px; transition: background 0.2s; }
+.notif-mark-all:hover { background: #fdf0ef; }
+.notif-list { overflow-y: auto; flex: 1; }
+.notif-item { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; position: relative; }
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: var(--cream); }
+.notif-item.unread { background: var(--notif-unread); border-left: 3px solid var(--notif-unread-border); }
+.notif-item.unread:hover { background: #fff3e0; }
+.notif-item-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.25rem; }
+.notif-from { font-size: 0.78rem; font-weight: 500; color: var(--tag-color); }
+.notif-time { font-size: 0.7rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.notif-task-text { font-size: 0.85rem; color: var(--ink); line-height: 1.4; }
+.notif-action { font-size: 0.73rem; color: var(--muted); margin-top: 0.25rem; }
+.unread-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); position: absolute; top: 0.9rem; right: 1rem; }
+.notif-empty { padding: 2.5rem 1.5rem; text-align: center; color: var(--muted); }
+.notif-empty .icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+.notif-empty p { font-size: 0.83rem; font-weight: 300; }
 
-  .btn-primary {
-    width: 100%; background: var(--accent); color: #fff; border: none;
-    padding: 0.85rem 1.5rem; font-family: 'DM Sans', sans-serif;
-    font-size: 0.88rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
-    cursor: pointer; border-radius: 2px; margin-top: 0.5rem; transition: background 0.2s, transform 0.1s;
-  }
-  .btn-primary:hover { background: var(--accent-light); }
-  .btn-primary:active { transform: translateY(1px); }
+.btn-signout {
+  background: none; border: 1px solid var(--border); padding: 0.38rem 0.85rem; border-radius: 2px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: var(--muted);
+  cursor: pointer; letter-spacing: 0.03em; transition: all 0.2s;
+}
+.btn-signout:hover { border-color: var(--accent); color: var(--accent); }
 
-  .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: var(--muted); font-size: 0.8rem; }
-  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+/* ════════ PAGES ════════ */
+.page { display: none; }
+.page.active { display: block; }
 
-  .btn-google {
-    width: 100%; background: #fff; border: 1px solid var(--border); padding: 0.8rem 1.5rem;
-    border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500;
-    color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center;
-    gap: 0.75rem; transition: background 0.2s, border-color 0.2s;
-  }
-  .btn-google:hover { background: var(--cream); border-color: var(--muted); }
+/* Tasks page */
+#page-tasks main { max-width: 680px; margin: 3rem auto; padding: 0 1.5rem; }
+.page-title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; margin-bottom: 0.4rem; }
+.page-subtitle { color: var(--muted); font-size: 0.88rem; margin-bottom: 2rem; font-weight: 300; }
 
-  .error-msg {
-    background: #fdf0ef; border-left: 3px solid var(--accent);
-    padding: 0.7rem 1rem; font-size: 0.85rem; color: var(--accent);
-    margin-bottom: 1rem; border-radius: 0 2px 2px 0; display: none;
-  }
+.add-task-card { background: var(--card); border: 1px solid var(--border); border-radius: 2px; padding: 1.2rem 1.4rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+.add-task-row { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
+.add-task-row input { flex: 1; }
+.btn-add { background: var(--accent); color: #fff; border: none; padding: 0.75rem 1.4rem; border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background 0.2s, transform 0.1s; }
+.btn-add:hover { background: var(--accent-light); }
+.btn-add:active { transform: translateY(1px); }
 
-  /* ─── APP ─── */
-  #app-screen { display: none; min-height: 100vh; position: relative; z-index: 1; }
+.tag-input-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; padding: 0.5rem 0.75rem; background: var(--paper); border: 1px solid var(--border); border-radius: 2px; min-height: 42px; cursor: text; transition: border-color 0.2s; }
+.tag-input-row:focus-within { border-color: var(--accent); }
+.tag-chip { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--tag-bg); color: var(--tag-color); border: 1px solid var(--tag-border); border-radius: 20px; padding: 0.15rem 0.6rem 0.15rem 0.5rem; font-size: 0.78rem; font-weight: 500; }
+.tag-chip .remove-tag { cursor: pointer; opacity: 0.6; font-size: 0.9rem; line-height: 1; padding: 0 0.1rem; transition: opacity 0.15s; }
+.tag-chip .remove-tag:hover { opacity: 1; }
+.tag-text-input { border: none !important; outline: none !important; background: transparent !important; padding: 0 !important; min-width: 160px; flex: 1; font-size: 0.88rem !important; font-family: 'DM Sans', sans-serif !important; color: var(--ink) !important; }
+.tag-hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; }
 
-  header {
-    background: var(--card); border-bottom: 1px solid var(--border);
-    padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 10;
-  }
-  .header-brand { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; }
-  .header-brand span { color: var(--accent); }
-  .user-info { display: flex; align-items: center; gap: 1rem; }
-  .user-avatar {
-    width: 34px; height: 34px; background: var(--cream); border: 1px solid var(--border);
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 0.85rem; font-weight: 500; color: var(--muted); overflow: hidden;
-  }
-  .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .user-email { font-size: 0.82rem; color: var(--muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .btn-signout {
-    background: none; border: 1px solid var(--border); padding: 0.4rem 0.9rem; border-radius: 2px;
-    font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--muted);
-    cursor: pointer; letter-spacing: 0.04em; transition: all 0.2s;
-  }
-  .btn-signout:hover { border-color: var(--accent); color: var(--accent); }
+.filter-row { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.filter-btn { background: none; border: 1px solid var(--border); padding: 0.35rem 0.9rem; border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.filter-btn.active { background: var(--ink); border-color: var(--ink); color: #fff; }
 
-  main { max-width: 680px; margin: 3rem auto; padding: 0 1.5rem; }
-  .page-title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; margin-bottom: 0.4rem; }
-  .page-subtitle { color: var(--muted); font-size: 0.88rem; margin-bottom: 2rem; font-weight: 300; }
+#tasks-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.task-item { background: var(--card); border: 1px solid var(--border); border-radius: 2px; padding: 1rem 1.2rem; animation: slideIn 0.25s ease; transition: opacity 0.2s, box-shadow 0.2s; }
+.task-item:hover { box-shadow: var(--shadow); }
+.task-item.done { opacity: 0.55; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.task-main-row { display: flex; align-items: flex-start; gap: 1rem; }
+.task-check { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 50%; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.task-check:hover { border-color: var(--accent); }
+.task-item.done .task-check { background: var(--accent); border-color: var(--accent); }
+.task-item.done .task-check::after { content: '✓'; color: #fff; font-size: 11px; font-weight: 700; }
+.task-body { flex: 1; min-width: 0; }
+.task-text { font-size: 0.95rem; line-height: 1.5; word-break: break-word; }
+.task-item.done .task-text { text-decoration: line-through; color: var(--muted); }
+.task-edit-input { width: 100%; background: var(--paper); border: 1px solid var(--accent); border-radius: 2px; padding: 0.4rem 0.6rem; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--ink); outline: none; }
+.task-meta { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.5rem; flex-wrap: wrap; }
+.task-date { font-size: 0.75rem; color: var(--muted); }
+.task-tag { display: inline-flex; align-items: center; background: var(--tag-bg); color: var(--tag-color); border: 1px solid var(--tag-border); border-radius: 20px; padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 500; }
+.task-tag::before { content: '@'; opacity: 0.6; }
+.task-actions { display: flex; gap: 0.3rem; flex-shrink: 0; margin-top: 1px; }
+.task-btn { background: none; border: none; color: var(--muted); font-size: 0.8rem; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 2px; transition: color 0.15s, background 0.15s; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+.task-btn:hover { color: var(--ink); background: var(--cream); }
+.task-btn.delete:hover { color: var(--accent); background: #fdf0ef; }
+.edit-save-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.btn-save { background: var(--accent); color: #fff; border: none; padding: 0.35rem 0.9rem; border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+.btn-save:hover { background: var(--accent-light); }
+.btn-cancel { background: none; border: 1px solid var(--border); padding: 0.35rem 0.9rem; border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.btn-cancel:hover { border-color: var(--muted); color: var(--ink); }
+.edit-tags-row { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; padding: 0.4rem 0.6rem; background: var(--paper); border: 1px solid var(--border); border-radius: 2px; min-height: 36px; margin-top: 0.5rem; cursor: text; transition: border-color 0.2s; }
+.edit-tags-row:focus-within { border-color: var(--accent); }
+.empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+.empty-state .icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+.empty-state p { font-size: 0.9rem; font-weight: 300; }
+.stats-bar { display: flex; gap: 2rem; padding: 1.2rem 0; border-top: 1px solid var(--border); margin-top: 1.5rem; font-size: 0.82rem; color: var(--muted); }
+.stat strong { color: var(--ink); font-size: 1.1rem; display: block; font-family: 'Playfair Display', serif; }
+.loading { display: flex; justify-content: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; }
 
-  /* Add task */
-  .add-task-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 2px;
-    padding: 1.2rem 1.4rem; margin-bottom: 1.5rem; box-shadow: var(--shadow);
-  }
-  .add-task-row { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
-  .add-task-row input { flex: 1; }
-  .btn-add {
-    background: var(--accent); color: #fff; border: none; padding: 0.75rem 1.4rem;
-    border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500;
-    cursor: pointer; white-space: nowrap; transition: background 0.2s, transform 0.1s;
-  }
-  .btn-add:hover { background: var(--accent-light); }
-  .btn-add:active { transform: translateY(1px); }
+/* ════════ MESSAGES PAGE ════════ */
+#page-messages { height: calc(100vh - 57px); display: none; }
+#page-messages.active { display: flex; }
 
-  /* Tag chip input */
-  .tag-input-row {
-    display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
-    padding: 0.5rem 0.75rem; background: var(--paper); border: 1px solid var(--border);
-    border-radius: 2px; min-height: 42px; cursor: text; transition: border-color 0.2s;
-  }
-  .tag-input-row:focus-within { border-color: var(--accent); }
+.msg-sidebar {
+  width: 280px; flex-shrink: 0; border-right: 1px solid var(--border);
+  background: var(--card); display: flex; flex-direction: column; overflow: hidden;
+}
+.msg-sidebar-header {
+  padding: 1.2rem 1.2rem 0.8rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.msg-sidebar-header h3 { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; }
+.btn-new-dm {
+  background: var(--accent); color: #fff; border: none; width: 28px; height: 28px;
+  border-radius: 2px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s; line-height: 1;
+}
+.btn-new-dm:hover { background: var(--accent-light); }
 
-  .tag-chip {
-    display: inline-flex; align-items: center; gap: 0.3rem;
-    background: var(--tag-bg); color: var(--tag-color); border: 1px solid var(--tag-border);
-    border-radius: 20px; padding: 0.15rem 0.6rem 0.15rem 0.5rem; font-size: 0.78rem; font-weight: 500;
-  }
-  .tag-chip .remove-tag { cursor: pointer; opacity: 0.6; font-size: 0.9rem; line-height: 1; padding: 0 0.1rem; transition: opacity 0.15s; }
-  .tag-chip .remove-tag:hover { opacity: 1; }
+.conv-list { overflow-y: auto; flex: 1; }
+.conv-item {
+  padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--border); cursor: pointer;
+  display: flex; align-items: center; gap: 0.75rem; transition: background 0.15s;
+}
+.conv-item:hover { background: var(--cream); }
+.conv-item.active { background: var(--cream); border-left: 3px solid var(--accent); }
+.conv-avatar {
+  width: 36px; height: 36px; background: var(--ink); color: #fff; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+  font-weight: 600; flex-shrink: 0; text-transform: uppercase;
+}
+.conv-info { flex: 1; min-width: 0; }
+.conv-email { font-size: 0.85rem; font-weight: 500; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv-preview { font-size: 0.75rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0.1rem; }
+.conv-unread-badge {
+  background: var(--accent); color: #fff; border-radius: 10px; font-size: 0.65rem;
+  font-weight: 700; min-width: 18px; height: 18px; display: flex; align-items: center;
+  justify-content: center; padding: 0 4px; flex-shrink: 0;
+}
+.conv-empty { padding: 2rem 1.5rem; text-align: center; color: var(--muted); font-size: 0.82rem; }
 
-  .tag-text-input {
-    border: none !important; outline: none !important; background: transparent !important;
-    padding: 0 !important; min-width: 160px; flex: 1; font-size: 0.88rem !important;
-    font-family: 'DM Sans', sans-serif !important; color: var(--ink) !important;
-  }
-  .tag-hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; }
+/* Chat area */
+.chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* Filters */
-  .filter-row { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-  .filter-btn {
-    background: none; border: 1px solid var(--border); padding: 0.35rem 0.9rem; border-radius: 20px;
-    font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--muted);
-    cursor: pointer; transition: all 0.2s;
-  }
-  .filter-btn.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+.chat-header {
+  padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); background: var(--card);
+  display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;
+}
+.chat-avatar { width: 34px; height: 34px; background: var(--ink); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 600; flex-shrink: 0; text-transform: uppercase; }
+.chat-with { font-weight: 500; font-size: 0.9rem; }
+.chat-with-sub { font-size: 0.75rem; color: var(--muted); }
 
-  /* Tasks */
-  #tasks-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
 
-  .task-item {
-    background: var(--card); border: 1px solid var(--border); border-radius: 2px;
-    padding: 1rem 1.2rem; animation: slideIn 0.25s ease; transition: opacity 0.2s, box-shadow 0.2s;
-  }
-  .task-item:hover { box-shadow: var(--shadow); }
-  .task-item.done { opacity: 0.55; }
+.msg-bubble-row { display: flex; align-items: flex-end; gap: 0.5rem; }
+.msg-bubble-row.me { flex-direction: row-reverse; }
 
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+.msg-bubble {
+  max-width: 68%; padding: 0.65rem 1rem; border-radius: 16px;
+  font-size: 0.9rem; line-height: 1.5; word-break: break-word;
+  position: relative;
+}
+.msg-bubble.them { background: var(--dm-them-bg); color: var(--dm-them-text); border-bottom-left-radius: 4px; }
+.msg-bubble.me { background: var(--dm-me-bg); color: var(--dm-me-text); border-bottom-right-radius: 4px; }
 
-  .task-main-row { display: flex; align-items: flex-start; gap: 1rem; }
+.msg-time { font-size: 0.68rem; color: var(--muted); flex-shrink: 0; padding-bottom: 2px; }
 
-  .task-check {
-    width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 50%;
-    cursor: pointer; flex-shrink: 0; margin-top: 2px;
-    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-  }
-  .task-check:hover { border-color: var(--accent); }
-  .task-item.done .task-check { background: var(--accent); border-color: var(--accent); }
-  .task-item.done .task-check::after { content: '✓'; color: #fff; font-size: 11px; font-weight: 700; }
+.msg-date-divider {
+  text-align: center; font-size: 0.72rem; color: var(--muted); margin: 0.5rem 0;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.msg-date-divider::before, .msg-date-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  .task-body { flex: 1; min-width: 0; }
-  .task-text { font-size: 0.95rem; line-height: 1.5; word-break: break-word; }
-  .task-item.done .task-text { text-decoration: line-through; color: var(--muted); }
+.chat-input-area {
+  padding: 1rem 1.5rem; border-top: 1px solid var(--border); background: var(--card);
+  display: flex; gap: 0.75rem; align-items: flex-end; flex-shrink: 0;
+}
+.chat-input-area textarea {
+  flex: 1; padding: 0.65rem 0.9rem; font-size: 0.9rem; border-radius: 20px;
+  min-height: 42px; max-height: 120px; line-height: 1.5;
+}
+.btn-send {
+  background: var(--accent); color: #fff; border: none; width: 40px; height: 40px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background 0.2s, transform 0.1s;
+}
+.btn-send:hover { background: var(--accent-light); }
+.btn-send:active { transform: scale(0.95); }
 
-  .task-edit-input {
-    width: 100%; background: var(--paper); border: 1px solid var(--accent);
-    border-radius: 2px; padding: 0.4rem 0.6rem;
-    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--ink); outline: none;
-  }
+.chat-placeholder {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--muted); gap: 0.75rem;
+}
+.chat-placeholder .icon { font-size: 3rem; }
+.chat-placeholder p { font-size: 0.88rem; font-weight: 300; }
+.chat-placeholder .btn-start { background: var(--accent); color: #fff; border: none; padding: 0.7rem 1.5rem; border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; margin-top: 0.5rem; transition: background 0.2s; }
+.chat-placeholder .btn-start:hover { background: var(--accent-light); }
 
-  .task-meta { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.5rem; flex-wrap: wrap; }
-  .task-date { font-size: 0.75rem; color: var(--muted); }
+/* New DM modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(26,26,46,0.4); z-index: 500;
+  display: none; align-items: center; justify-content: center; padding: 2rem;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 4px;
+  padding: 2rem; width: 100%; max-width: 400px; box-shadow: var(--shadow-lg);
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 1.2rem; }
+.modal-actions { display: flex; gap: 0.75rem; margin-top: 1.2rem; }
+.btn-modal-cancel { flex: 1; background: none; border: 1px solid var(--border); padding: 0.7rem; border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.btn-modal-cancel:hover { border-color: var(--muted); color: var(--ink); }
+.btn-modal-ok { flex: 1; background: var(--accent); color: #fff; border: none; padding: 0.7rem; border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+.btn-modal-ok:hover { background: var(--accent-light); }
 
-  .task-tag {
-    display: inline-flex; align-items: center; gap: 0.25rem;
-    background: var(--tag-bg); color: var(--tag-color); border: 1px solid var(--tag-border);
-    border-radius: 20px; padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 500;
-  }
-  .task-tag::before { content: '@'; opacity: 0.6; }
-
-  .task-actions { display: flex; gap: 0.3rem; flex-shrink: 0; margin-top: 1px; }
-  .task-btn {
-    background: none; border: none; color: var(--muted); font-size: 0.8rem;
-    cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 2px;
-    transition: color 0.15s, background 0.15s; font-family: 'DM Sans', sans-serif; white-space: nowrap;
-  }
-  .task-btn:hover { color: var(--ink); background: var(--cream); }
-  .task-btn.delete:hover { color: var(--accent); background: #fdf0ef; }
-
-  .edit-save-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-  .btn-save {
-    background: var(--accent); color: #fff; border: none; padding: 0.35rem 0.9rem; border-radius: 2px;
-    font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: background 0.2s;
-  }
-  .btn-save:hover { background: var(--accent-light); }
-  .btn-cancel {
-    background: none; border: 1px solid var(--border); padding: 0.35rem 0.9rem; border-radius: 2px;
-    font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--muted); cursor: pointer; transition: all 0.2s;
-  }
-  .btn-cancel:hover { border-color: var(--muted); color: var(--ink); }
-
-  .edit-tags-row {
-    display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;
-    padding: 0.4rem 0.6rem; background: var(--paper); border: 1px solid var(--border);
-    border-radius: 2px; min-height: 36px; margin-top: 0.5rem; cursor: text; transition: border-color 0.2s;
-  }
-  .edit-tags-row:focus-within { border-color: var(--accent); }
-
-  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
-  .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
-  .empty-state p { font-size: 0.9rem; font-weight: 300; }
-
-  .stats-bar {
-    display: flex; gap: 2rem; padding: 1.2rem 0;
-    border-top: 1px solid var(--border); margin-top: 1.5rem;
-    font-size: 0.82rem; color: var(--muted);
-  }
-  .stat strong { color: var(--ink); font-size: 1.1rem; display: block; font-family: 'Playfair Display', serif; }
-  .loading { display: flex; justify-content: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; }
+/* Toast */
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--ink); color: #fff; padding: 0.65rem 1.3rem; border-radius: 4px; font-size: 0.83rem; font-weight: 500; z-index: 999; transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s; opacity: 0; pointer-events: none; white-space: nowrap; }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
 
-<!-- AUTH SCREEN -->
+<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-card">
-    <div class="brand">
-      <h1>Task<span>line</span></h1>
-      <p>Your personal task manager — sign in to begin.</p>
-    </div>
+    <div class="brand"><h1>Task<span>line</span></h1><p>Your personal task manager — sign in to begin.</p></div>
     <div class="tab-row">
       <button class="tab-btn active" onclick="switchTab('login')">Sign in</button>
       <button class="tab-btn" onclick="switchTab('register')">Register</button>
     </div>
     <div id="auth-error" class="error-msg"></div>
-
     <div id="login-form">
       <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
       <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
       <button class="btn-primary" onclick="handleLogin()">Sign in</button>
       <div class="divider">or</div>
-      <button class="btn-google" onclick="handleGoogle()">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Continue with Google
-      </button>
+      <button class="btn-google" onclick="handleGoogle()"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
     </div>
-
     <div id="register-form" style="display:none">
       <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
       <div class="form-group"><label>Password</label><input type="password" id="reg-password" placeholder="Min. 6 characters"></div>
       <button class="btn-primary" onclick="handleRegister()">Create account</button>
       <div class="divider">or</div>
-      <button class="btn-google" onclick="handleGoogle()">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Continue with Google
-      </button>
+      <button class="btn-google" onclick="handleGoogle()"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
     </div>
   </div>
 </div>
 
-<!-- APP SCREEN -->
+<!-- APP -->
 <div id="app-screen">
   <header>
-    <div class="header-brand">Task<span>line</span></div>
+    <div class="header-left">
+      <div class="header-brand" onclick="switchPage('tasks')">Task<span>line</span></div>
+      <nav class="header-nav">
+        <button class="nav-btn active" id="nav-tasks" onclick="switchPage('tasks')">Tasks</button>
+        <button class="nav-btn" id="nav-messages" onclick="switchPage('messages')">
+          Messages
+          <span class="nav-badge" id="dm-badge" style="display:none"></span>
+        </button>
+      </nav>
+    </div>
     <div class="user-info">
+      <div class="notif-wrapper">
+        <button class="notif-bell" id="notif-bell" onclick="toggleNotifPanel()" title="Tag notifications">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-header"><h3>Tag Notifications</h3><button class="notif-mark-all" onclick="markAllRead()">Mark all read</button></div>
+          <div class="notif-list" id="notif-list"><div class="notif-empty"><span class="icon">🔔</span><p>No notifications yet</p></div></div>
+        </div>
+      </div>
       <div class="user-avatar" id="user-avatar"></div>
       <span class="user-email" id="user-email-display"></span>
       <button class="btn-signout" onclick="handleSignOut()">Sign out</button>
     </div>
   </header>
 
-  <main>
-    <h2 class="page-title" id="greeting">Good morning</h2>
-    <p class="page-subtitle">Here's what's on your list today.</p>
-
-    <div class="add-task-card">
-      <div class="add-task-row">
-        <input type="text" id="new-task-input" placeholder="Add a new task…" maxlength="300">
-        <button class="btn-add" onclick="addTask()">+ Add</button>
+  <!-- TASKS PAGE -->
+  <div class="page active" id="page-tasks">
+    <main>
+      <h2 class="page-title" id="greeting">Good morning</h2>
+      <p class="page-subtitle">Here's what's on your list today.</p>
+      <div class="add-task-card">
+        <div class="add-task-row">
+          <input type="text" id="new-task-input" placeholder="Add a new task…" maxlength="300">
+          <button class="btn-add" onclick="addTask()">+ Add</button>
+        </div>
+        <div class="tag-input-row" id="new-tag-container" onclick="document.getElementById('new-tag-input').focus()">
+          <input type="text" class="tag-text-input" id="new-tag-input" placeholder="Tag people by email (press Enter or comma)…">
+        </div>
+        <p class="tag-hint">Type an email and press <strong>Enter</strong> or <strong>,</strong> to tag someone</p>
       </div>
-      <div class="tag-input-row" id="new-tag-container" onclick="document.getElementById('new-tag-input').focus()">
-        <input type="text" class="tag-text-input" id="new-tag-input" placeholder="Tag people by email (press Enter or comma)…">
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('active',this)">Active</button>
+        <button class="filter-btn" onclick="setFilter('done',this)">Done</button>
       </div>
-      <p class="tag-hint">Type an email and press <strong>Enter</strong> or <strong>,</strong> to add a tag</p>
-    </div>
+      <div id="tasks-list"><div class="loading">Loading your tasks…</div></div>
+      <div class="stats-bar" id="stats-bar" style="display:none">
+        <div class="stat"><strong id="stat-total">0</strong>Total</div>
+        <div class="stat"><strong id="stat-done">0</strong>Completed</div>
+        <div class="stat"><strong id="stat-active">0</strong>Remaining</div>
+      </div>
+    </main>
+  </div>
 
-    <div class="filter-row">
-      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
-      <button class="filter-btn" onclick="setFilter('active', this)">Active</button>
-      <button class="filter-btn" onclick="setFilter('done', this)">Done</button>
+  <!-- MESSAGES PAGE -->
+  <div class="page" id="page-messages">
+    <div class="msg-sidebar">
+      <div class="msg-sidebar-header">
+        <h3>Messages</h3>
+        <button class="btn-new-dm" onclick="openNewDmModal()" title="New message">+</button>
+      </div>
+      <div class="conv-list" id="conv-list">
+        <div class="conv-empty">No conversations yet.<br>Hit + to start one.</div>
+      </div>
     </div>
-
-    <div id="tasks-list"><div class="loading">Loading your tasks…</div></div>
-
-    <div class="stats-bar" id="stats-bar" style="display:none">
-      <div class="stat"><strong id="stat-total">0</strong>Total</div>
-      <div class="stat"><strong id="stat-done">0</strong>Completed</div>
-      <div class="stat"><strong id="stat-active">0</strong>Remaining</div>
+    <div class="chat-area" id="chat-area">
+      <div class="chat-placeholder">
+        <span class="icon">💬</span>
+        <p>Select a conversation or start a new one</p>
+        <button class="btn-start" onclick="openNewDmModal()">New Message</button>
+      </div>
     </div>
-  </main>
+  </div>
 </div>
 
+<!-- New DM Modal -->
+<div class="modal-overlay" id="new-dm-modal">
+  <div class="modal-card">
+    <div class="modal-title">New Message</div>
+    <div class="form-group">
+      <label>Recipient Email</label>
+      <input type="email" id="dm-recipient-input" placeholder="friend@example.com">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeNewDmModal()">Cancel</button>
+      <button class="btn-modal-ok" onclick="startNewDm()">Start Chat</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import {
-    getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-    signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged
-  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import {
-    getFirestore, collection, addDoc, query, where, orderBy,
-    onSnapshot, updateDoc, deleteDoc, doc, serverTimestamp
-  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import {
+  getFirestore, collection, addDoc, query, where, orderBy, or,
+  onSnapshot, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch,
+  getDocs, getDoc, setDoc, limit
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCG6MpOYSF_NRhUj6UER40yWILubNQI5EE",
-    authDomain: "todo-67067.firebaseapp.com",
-    projectId: "todo-67067",
-    storageBucket: "todo-67067.firebasestorage.app",
-    messagingSenderId: "731409843570",
-    appId: "1:731409843570:web:1786fd1e738086871ac9eb",
-    measurementId: "G-QXVJD5HW49"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyCG6MpOYSF_NRhUj6UER40yWILubNQI5EE",
+  authDomain: "todo-67067.firebaseapp.com",
+  projectId: "todo-67067",
+  storageBucket: "todo-67067.firebasestorage.app",
+  messagingSenderId: "731409843570",
+  appId: "1:731409843570:web:1786fd1e738086871ac9eb",
+  measurementId: "G-QXVJD5HW49"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const googleProvider = new GoogleAuthProvider();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
-  let currentUser = null;
-  let currentFilter = 'all';
-  let unsubscribeTasks = null;
-  let cachedTasks = [];
+let currentUser = null;
+let currentFilter = 'all';
+let unsubscribeTasks = null;
+let unsubscribeNotifs = null;
+let unsubscribeConvs = null;
+let unsubscribeMessages = null;
+let cachedTasks = [];
+let cachedNotifs = [];
+let activeConvId = null;
 
-  // ══════════════════════════
-  //  TAG CHIP UTILITIES
-  // ══════════════════════════
+// ══════════════════════════════════
+//  UTILS
+// ══════════════════════════════════
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+function timeAgo(date) {
+  const s = Math.floor((new Date() - date) / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.floor(s/60); if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m/60); if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h/24); if (d < 7) return `${d}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function formatTime(date) {
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+function formatDateLabel(date) {
+  const today = new Date(); const d = new Date(date);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+}
 
-  function makeChip(email, onRemove) {
-    const chip = document.createElement('span');
-    chip.className = 'tag-chip';
-    chip.innerHTML = `${escapeHtml(email)} <span class="remove-tag" title="Remove">×</span>`;
-    chip.querySelector('.remove-tag').addEventListener('click', e => { e.stopPropagation(); onRemove(); });
-    return chip;
-  }
+// ══════════════════════════════════
+//  AUTH
+// ══════════════════════════════════
+onAuthStateChanged(auth, user => {
+  if (user) { currentUser = user; showApp(user); }
+  else { currentUser = null; showAuth(); }
+});
 
-  // ─── "Add Task" tag state ───
-  let newTaskTags = [];
+function showApp(user) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.flexDirection = 'column';
+  const av = document.getElementById('user-avatar');
+  av.innerHTML = user.photoURL ? `<img src="${user.photoURL}" alt="">` : escapeHtml((user.email||'U')[0].toUpperCase());
+  document.getElementById('user-email-display').textContent = user.displayName || user.email;
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent =
+    (h<12?'Good morning':h<18?'Good afternoon':'Good evening') +
+    (user.displayName ? `, ${user.displayName.split(' ')[0]}` : '');
+  loadTasks();
+  loadNotifications();
+  loadConversations();
+}
 
-  function renderNewTags() {
-    const container = document.getElementById('new-tag-container');
-    const input = document.getElementById('new-tag-input');
-    container.querySelectorAll('.tag-chip').forEach(c => c.remove());
-    newTaskTags.forEach((email, i) => {
-      container.insertBefore(makeChip(email, () => { newTaskTags.splice(i, 1); renderNewTags(); }), input);
-    });
-  }
+function showAuth() {
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  [unsubscribeTasks, unsubscribeNotifs, unsubscribeConvs, unsubscribeMessages].forEach(u => u?.());
+}
 
-  function addNewTag(raw) {
-    const email = raw.trim().replace(/,/g, '').toLowerCase();
-    if (!email || !email.includes('@') || newTaskTags.includes(email)) return;
-    newTaskTags.push(email);
-    renderNewTags();
-  }
+window.switchTab = tab => {
+  document.getElementById('login-form').style.display = tab==='login' ? '' : 'none';
+  document.getElementById('register-form').style.display = tab==='register' ? '' : 'none';
+  document.querySelectorAll('.tab-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(tab==='login'?'sign':'reg')));
+  document.getElementById('auth-error').style.display = 'none';
+};
 
-  document.getElementById('new-tag-input').addEventListener('keydown', e => {
-    const input = e.target;
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addNewTag(input.value);
-      input.value = '';
-    } else if (e.key === 'Backspace' && input.value === '' && newTaskTags.length) {
-      newTaskTags.pop(); renderNewTags();
-    }
+window.handleLogin = async () => {
+  try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value.trim(), document.getElementById('login-password').value); }
+  catch(e) { showAuthError(friendlyError(e.code)); }
+};
+window.handleRegister = async () => {
+  try { await createUserWithEmailAndPassword(auth, document.getElementById('reg-email').value.trim(), document.getElementById('reg-password').value); }
+  catch(e) { showAuthError(friendlyError(e.code)); }
+};
+window.handleGoogle = async () => {
+  try { await signInWithPopup(auth, googleProvider); }
+  catch(e) { showAuthError(friendlyError(e.code)); }
+};
+window.handleSignOut = () => signOut(auth);
+
+function showAuthError(msg) { const el=document.getElementById('auth-error'); el.textContent=msg; el.style.display='block'; }
+function friendlyError(code) {
+  return ({'auth/user-not-found':'No account with that email.','auth/wrong-password':'Incorrect password.',
+    'auth/email-already-in-use':'Email already in use.','auth/weak-password':'Password needs 6+ characters.',
+    'auth/invalid-email':'Invalid email address.','auth/popup-closed-by-user':'Popup closed.'})[code]||'Something went wrong.';
+}
+
+// ══════════════════════════════════
+//  PAGE NAVIGATION
+// ══════════════════════════════════
+window.switchPage = page => {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.getElementById(`nav-${page}`).classList.add('active');
+};
+
+// ══════════════════════════════════
+//  TAG CHIPS
+// ══════════════════════════════════
+function makeChip(email, onRemove) {
+  const chip = document.createElement('span');
+  chip.className = 'tag-chip';
+  chip.innerHTML = `${escapeHtml(email)} <span class="remove-tag">×</span>`;
+  chip.querySelector('.remove-tag').addEventListener('click', e => { e.stopPropagation(); onRemove(); });
+  return chip;
+}
+let newTaskTags = [];
+function renderNewTags() {
+  const c = document.getElementById('new-tag-container'), inp = document.getElementById('new-tag-input');
+  c.querySelectorAll('.tag-chip').forEach(x => x.remove());
+  newTaskTags.forEach((e,i) => c.insertBefore(makeChip(e, ()=>{ newTaskTags.splice(i,1); renderNewTags(); }), inp));
+}
+function addNewTag(raw) {
+  const e = raw.trim().replace(/,/g,'').toLowerCase();
+  if (!e || !e.includes('@') || newTaskTags.includes(e)) return;
+  newTaskTags.push(e); renderNewTags();
+}
+document.getElementById('new-tag-input').addEventListener('keydown', e => {
+  const inp = e.target;
+  if (e.key==='Enter'||e.key===',') { e.preventDefault(); addNewTag(inp.value); inp.value=''; }
+  else if (e.key==='Backspace' && inp.value==='' && newTaskTags.length) { newTaskTags.pop(); renderNewTags(); }
+});
+document.getElementById('new-tag-input').addEventListener('blur', e => {
+  if (e.target.value.trim()) { addNewTag(e.target.value); e.target.value=''; }
+});
+
+// ══════════════════════════════════
+//  NOTIFICATIONS
+// ══════════════════════════════════
+function loadNotifications() {
+  const q = query(collection(db,'notifications'), where('toEmail','==',currentUser.email.toLowerCase()), orderBy('createdAt','desc'));
+  unsubscribeNotifs = onSnapshot(q, snap => {
+    cachedNotifs = snap.docs.map(d => ({id:d.id,...d.data()}));
+    renderNotifications(cachedNotifs);
   });
-
-  document.getElementById('new-tag-input').addEventListener('blur', e => {
-    if (e.target.value.trim()) { addNewTag(e.target.value); e.target.value = ''; }
-  });
-
-  // ══════════════════════════
-  //  AUTH
-  // ══════════════════════════
-
-  onAuthStateChanged(auth, user => {
-    if (user) { currentUser = user; showApp(user); }
-    else { currentUser = null; showAuth(); }
-  });
-
-  function showApp(user) {
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'block';
-    const avatar = document.getElementById('user-avatar');
-    avatar.innerHTML = user.photoURL ? `<img src="${user.photoURL}" alt="">` : escapeHtml((user.email || 'U')[0].toUpperCase());
-    document.getElementById('user-email-display').textContent = user.displayName || user.email;
-    const h = new Date().getHours();
-    const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-    document.getElementById('greeting').textContent = g + (user.displayName ? `, ${user.displayName.split(' ')[0]}` : '');
-    loadTasks();
-  }
-
-  function showAuth() {
-    document.getElementById('app-screen').style.display = 'none';
-    document.getElementById('auth-screen').style.display = 'flex';
-    if (unsubscribeTasks) { unsubscribeTasks(); unsubscribeTasks = null; }
-  }
-
-  window.switchTab = tab => {
-    document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
-    document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
-    document.querySelectorAll('.tab-btn').forEach(b =>
-      b.classList.toggle('active', b.textContent.toLowerCase().includes(tab === 'login' ? 'sign' : 'reg')));
-    clearError();
-  };
-
-  window.handleLogin = async () => {
-    try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value.trim(), document.getElementById('login-password').value); }
-    catch (e) { showError(friendlyError(e.code)); }
-  };
-
-  window.handleRegister = async () => {
-    try { await createUserWithEmailAndPassword(auth, document.getElementById('reg-email').value.trim(), document.getElementById('reg-password').value); }
-    catch (e) { showError(friendlyError(e.code)); }
-  };
-
-  window.handleGoogle = async () => {
-    try { await signInWithPopup(auth, googleProvider); }
-    catch (e) { showError(friendlyError(e.code)); }
-  };
-
-  window.handleSignOut = () => signOut(auth);
-
-  function showError(msg) { const el = document.getElementById('auth-error'); el.textContent = msg; el.style.display = 'block'; }
-  function clearError() { document.getElementById('auth-error').style.display = 'none'; }
-
-  function friendlyError(code) {
-    return ({
-      'auth/user-not-found': 'No account found with that email.',
-      'auth/wrong-password': 'Incorrect password.',
-      'auth/email-already-in-use': 'Email already in use.',
-      'auth/weak-password': 'Password must be at least 6 characters.',
-      'auth/invalid-email': 'Please enter a valid email.',
-      'auth/popup-closed-by-user': 'Sign-in popup was closed.',
-    })[code] || 'Something went wrong. Please try again.';
-  }
-
-  // ══════════════════════════
-  //  TASKS
-  // ══════════════════════════
-
-  function loadTasks() {
-    document.getElementById('tasks-list').innerHTML = '<div class="loading">Loading your tasks…</div>';
-    const q = query(collection(db, 'tasks'), where('uid', '==', currentUser.uid), orderBy('createdAt', 'desc'));
-    unsubscribeTasks = onSnapshot(q, snap => {
-      cachedTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderTasks(cachedTasks);
-    });
-  }
-
-  function renderTasks(tasks) {
-    const listEl = document.getElementById('tasks-list');
-    const filtered = tasks.filter(t =>
-      currentFilter === 'active' ? !t.done : currentFilter === 'done' ? t.done : true
-    );
-
-    document.getElementById('stats-bar').style.display = tasks.length ? 'flex' : 'none';
-    document.getElementById('stat-total').textContent = tasks.length;
-    document.getElementById('stat-done').textContent = tasks.filter(t => t.done).length;
-    document.getElementById('stat-active').textContent = tasks.filter(t => !t.done).length;
-
-    if (!filtered.length) {
-      listEl.innerHTML = `<div class="empty-state">
-        <span class="icon">${currentFilter === 'done' ? '🎉' : '✏️'}</span>
-        <p>${currentFilter === 'done' ? 'No completed tasks yet.' : currentFilter === 'active' ? 'All caught up!' : 'Add your first task above.'}</p>
-      </div>`;
-      return;
-    }
-    listEl.innerHTML = filtered.map(taskHTML).join('');
-  }
-
-  function taskHTML(task) {
-    const date = task.createdAt?.toDate();
-    const dateStr = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-    const tags = task.tags || [];
-    const tagHTML = tags.map(t => `<span class="task-tag">${escapeHtml(t)}</span>`).join('');
-    return `<div class="task-item ${task.done ? 'done' : ''}" id="task-${task.id}">
-      <div class="task-main-row">
-        <div class="task-check" onclick="toggleTask('${task.id}', ${!!task.done})"></div>
-        <div class="task-body">
-          <div class="task-text">${escapeHtml(task.text)}</div>
-          <div class="task-meta">
-            ${dateStr ? `<span class="task-date">${dateStr}</span>` : ''}
-            ${tagHTML}
-          </div>
-        </div>
-        <div class="task-actions">
-          <button class="task-btn" onclick="startEdit('${task.id}')">✎ Edit</button>
-          <button class="task-btn delete" onclick="deleteTask('${task.id}')">× Delete</button>
-        </div>
-      </div>
+}
+function renderNotifications(notifs) {
+  const list = document.getElementById('notif-list');
+  const bell = document.getElementById('notif-bell');
+  const unread = notifs.filter(n => !n.read);
+  bell.querySelectorAll('.notif-badge').forEach(b=>b.remove());
+  if (unread.length) {
+    bell.classList.add('has-unread');
+    const badge = document.createElement('span');
+    badge.className='notif-badge'; badge.textContent=unread.length>9?'9+':unread.length;
+    bell.appendChild(badge);
+  } else { bell.classList.remove('has-unread'); }
+  if (!notifs.length) { list.innerHTML=`<div class="notif-empty"><span class="icon">🔔</span><p>No notifications yet</p></div>`; return; }
+  list.innerHTML = notifs.map(n => {
+    const ts = n.createdAt ? timeAgo(n.createdAt.toDate()) : '';
+    return `<div class="notif-item ${n.read?'':'unread'}" onclick="handleNotifClick('${n.id}')">
+      ${!n.read?'<div class="unread-dot"></div>':''}
+      <div class="notif-item-header"><span class="notif-from">📌 ${escapeHtml(n.fromEmail)}</span><span class="notif-time">${ts}</span></div>
+      <div class="notif-task-text">"${escapeHtml(n.taskText)}"</div>
+      <div class="notif-action">Tagged you on a task</div>
     </div>`;
+  }).join('');
+}
+window.toggleNotifPanel = () => document.getElementById('notif-panel').classList.toggle('open');
+document.addEventListener('click', e => {
+  if (!document.querySelector('.notif-wrapper')?.contains(e.target))
+    document.getElementById('notif-panel').classList.remove('open');
+});
+window.handleNotifClick = async id => {
+  await updateDoc(doc(db,'notifications',id), {read:true});
+  document.getElementById('notif-panel').classList.remove('open');
+};
+window.markAllRead = async () => {
+  const unread = cachedNotifs.filter(n=>!n.read);
+  if (!unread.length) return;
+  const batch = writeBatch(db);
+  unread.forEach(n => batch.update(doc(db,'notifications',n.id), {read:true}));
+  await batch.commit(); showToast('All marked as read');
+};
+async function sendTagNotifications(taskId, taskText, tags, prevTags=[]) {
+  const newTags = tags.filter(e => !prevTags.includes(e));
+  for (const email of newTags) {
+    if (email === currentUser.email.toLowerCase()) continue;
+    await addDoc(collection(db,'notifications'), {
+      toEmail: email, fromEmail: currentUser.email.toLowerCase(),
+      taskId, taskText: taskText.substring(0,100), read: false, createdAt: serverTimestamp()
+    });
   }
+}
 
-  // ─── Inline Edit ───
-  window.startEdit = id => {
-    const task = cachedTasks.find(t => t.id === id);
-    if (!task) return;
-
-    const item = document.getElementById(`task-${id}`);
-    const editTags = [...(task.tags || [])];
-
-    function renderEditChips() {
-      const container = document.getElementById(`edit-tags-${id}`);
-      const input = document.getElementById(`edit-tag-input-${id}`);
-      if (!container || !input) return;
-      container.querySelectorAll('.tag-chip').forEach(c => c.remove());
-      editTags.forEach((email, i) => {
-        container.insertBefore(makeChip(email, () => { editTags.splice(i, 1); renderEditChips(); }), input);
-      });
-    }
-
-    item.innerHTML = `
-      <div class="task-main-row">
-        <div class="task-check" style="${task.done ? 'background:var(--accent);border-color:var(--accent)' : ''}">
-          ${task.done ? '<span style="color:#fff;font-size:11px;font-weight:700">✓</span>' : ''}
-        </div>
-        <div class="task-body" style="flex:1">
-          <input class="task-edit-input" id="edit-input-${id}" type="text" value="${escapeHtml(task.text)}" maxlength="300">
-          <div class="edit-tags-row" id="edit-tags-${id}" onclick="document.getElementById('edit-tag-input-${id}').focus()">
-            <input type="text" class="tag-text-input" id="edit-tag-input-${id}" placeholder="Tag people by email…" style="min-width:140px;font-family:'DM Sans',sans-serif;color:var(--ink)">
-          </div>
-          <div class="edit-save-row">
-            <button class="btn-save" onclick="saveEdit('${id}')">Save</button>
-            <button class="btn-cancel" onclick="cancelEdit('${id}')">Cancel</button>
-          </div>
-        </div>
-      </div>`;
-
-    // Store editTags reference on element for saveEdit
-    item._editTags = editTags;
-
-    renderEditChips();
-
-    const tagInput = document.getElementById(`edit-tag-input-${id}`);
-    tagInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        const v = tagInput.value.trim().replace(/,/g, '').toLowerCase();
-        if (v && v.includes('@') && !editTags.includes(v)) { editTags.push(v); renderEditChips(); }
-        tagInput.value = '';
-      } else if (e.key === 'Backspace' && tagInput.value === '' && editTags.length) {
-        editTags.pop(); renderEditChips();
-      } else if (e.key === 'Escape') {
-        cancelEdit(id);
-      }
-    });
-
-    const editInput = document.getElementById(`edit-input-${id}`);
-    editInput.focus();
-    editInput.select();
-    editInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') saveEdit(id);
-      if (e.key === 'Escape') cancelEdit(id);
-    });
-  };
-
-  window.saveEdit = async id => {
-    const item = document.getElementById(`task-${id}`);
-    const input = document.getElementById(`edit-input-${id}`);
-    const text = input?.value.trim();
-    if (!text) return;
-
-    // Flush any uncommitted typed email
-    const tagInput = document.getElementById(`edit-tag-input-${id}`);
-    if (tagInput?.value.trim().includes('@')) {
-      const v = tagInput.value.trim().toLowerCase();
-      if (!item._editTags.includes(v)) item._editTags.push(v);
-    }
-
-    await updateDoc(doc(db, 'tasks', id), { text, tags: item._editTags || [], updatedAt: serverTimestamp() });
-    // Firestore onSnapshot will re-render automatically
-  };
-
-  window.cancelEdit = id => {
-    const task = cachedTasks.find(t => t.id === id);
-    if (!task) return;
-    document.getElementById(`task-${id}`).outerHTML = taskHTML(task);
-  };
-
-  // ─── CRUD ───
-  window.addTask = async () => {
-    const input = document.getElementById('new-task-input');
-    const tagInput = document.getElementById('new-tag-input');
-    if (tagInput.value.trim().includes('@')) { addNewTag(tagInput.value); tagInput.value = ''; }
-    const text = input.value.trim();
-    if (!text || !currentUser) return;
-    input.value = '';
-    const tags = [...newTaskTags];
-    newTaskTags = []; renderNewTags();
-    await addDoc(collection(db, 'tasks'), { uid: currentUser.uid, text, tags, done: false, createdAt: serverTimestamp() });
-  };
-
-  window.toggleTask = async (id, currentDone) => {
-    await updateDoc(doc(db, 'tasks', id), { done: !currentDone });
-  };
-
-  window.deleteTask = async id => {
-    if (!confirm('Delete this task?')) return;
-    await deleteDoc(doc(db, 'tasks', id));
-  };
-
-  window.setFilter = (filter, btn) => {
-    currentFilter = filter;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+// ══════════════════════════════════
+//  TASKS
+// ══════════════════════════════════
+function loadTasks() {
+  document.getElementById('tasks-list').innerHTML='<div class="loading">Loading…</div>';
+  const q = query(collection(db,'tasks'), where('uid','==',currentUser.uid), orderBy('createdAt','desc'));
+  unsubscribeTasks = onSnapshot(q, snap => {
+    cachedTasks = snap.docs.map(d => ({id:d.id,...d.data()}));
     renderTasks(cachedTasks);
-  };
-
-  document.getElementById('new-task-input').addEventListener('keydown', e => { if (e.key === 'Enter') window.addTask(); });
-  document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') window.handleLogin(); });
-
-  function escapeHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  });
+}
+function renderTasks(tasks) {
+  const el = document.getElementById('tasks-list');
+  const f = tasks.filter(t => currentFilter==='active'?!t.done:currentFilter==='done'?t.done:true);
+  document.getElementById('stats-bar').style.display = tasks.length?'flex':'none';
+  document.getElementById('stat-total').textContent = tasks.length;
+  document.getElementById('stat-done').textContent = tasks.filter(t=>t.done).length;
+  document.getElementById('stat-active').textContent = tasks.filter(t=>!t.done).length;
+  if (!f.length) { el.innerHTML=`<div class="empty-state"><span class="icon">${currentFilter==='done'?'🎉':'✏️'}</span><p>${currentFilter==='done'?'No completed tasks.':currentFilter==='active'?'All caught up!':'Add your first task above.'}</p></div>`; return; }
+  el.innerHTML = f.map(taskHTML).join('');
+}
+function taskHTML(task) {
+  const date = task.createdAt?.toDate();
+  const dateStr = date ? date.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+  const tags = (task.tags||[]).map(t=>`<span class="task-tag">${escapeHtml(t)}</span>`).join('');
+  return `<div class="task-item ${task.done?'done':''}" id="task-${task.id}">
+    <div class="task-main-row">
+      <div class="task-check" onclick="toggleTask('${task.id}',${!!task.done})"></div>
+      <div class="task-body">
+        <div class="task-text">${escapeHtml(task.text)}</div>
+        <div class="task-meta">${dateStr?`<span class="task-date">${dateStr}</span>`:''}${tags}</div>
+      </div>
+      <div class="task-actions">
+        <button class="task-btn" onclick="startEdit('${task.id}')">✎ Edit</button>
+        <button class="task-btn delete" onclick="deleteTask('${task.id}')">× Delete</button>
+      </div>
+    </div>
+  </div>`;
+}
+window.startEdit = id => {
+  const task = cachedTasks.find(t=>t.id===id); if (!task) return;
+  const item = document.getElementById(`task-${id}`);
+  const editTags = [...(task.tags||[])];
+  function renderEditChips() {
+    const c=document.getElementById(`edit-tags-${id}`), inp=document.getElementById(`edit-tag-input-${id}`);
+    if(!c||!inp) return; c.querySelectorAll('.tag-chip').forEach(x=>x.remove());
+    editTags.forEach((e,i) => c.insertBefore(makeChip(e,()=>{editTags.splice(i,1);renderEditChips();}), inp));
   }
+  item.innerHTML=`<div class="task-main-row">
+    <div class="task-check" style="${task.done?'background:var(--accent);border-color:var(--accent)':''}">
+      ${task.done?'<span style="color:#fff;font-size:11px;font-weight:700">✓</span>':''}
+    </div>
+    <div class="task-body" style="flex:1">
+      <input class="task-edit-input" id="edit-input-${id}" type="text" value="${escapeHtml(task.text)}" maxlength="300">
+      <div class="edit-tags-row" id="edit-tags-${id}" onclick="document.getElementById('edit-tag-input-${id}').focus()">
+        <input type="text" class="tag-text-input" id="edit-tag-input-${id}" placeholder="Tag people by email…" style="min-width:140px;font-family:'DM Sans',sans-serif;color:var(--ink)">
+      </div>
+      <div class="edit-save-row">
+        <button class="btn-save" onclick="saveEdit('${id}')">Save</button>
+        <button class="btn-cancel" onclick="cancelEdit('${id}')">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+  item._editTags=editTags; item._originalTags=[...(task.tags||[])]; renderEditChips();
+  const tagInp=document.getElementById(`edit-tag-input-${id}`);
+  tagInp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===','){e.preventDefault();const v=tagInp.value.trim().replace(/,/g,'').toLowerCase();if(v&&v.includes('@')&&!editTags.includes(v)){editTags.push(v);renderEditChips();}tagInp.value='';}
+    else if(e.key==='Backspace'&&tagInp.value===''&&editTags.length){editTags.pop();renderEditChips();}
+    else if(e.key==='Escape'){cancelEdit(id);}
+  });
+  const ei=document.getElementById(`edit-input-${id}`);
+  ei.focus(); ei.select();
+  ei.addEventListener('keydown',e=>{if(e.key==='Enter')saveEdit(id);if(e.key==='Escape')cancelEdit(id);});
+};
+window.saveEdit = async id => {
+  const item=document.getElementById(`task-${id}`);
+  const text=document.getElementById(`edit-input-${id}`)?.value.trim(); if(!text) return;
+  const ti=document.getElementById(`edit-tag-input-${id}`);
+  if(ti?.value.trim().includes('@')){const v=ti.value.trim().toLowerCase();if(!item._editTags.includes(v))item._editTags.push(v);}
+  const newTags=item._editTags||[], oldTags=item._originalTags||[];
+  await updateDoc(doc(db,'tasks',id),{text,tags:newTags,updatedAt:serverTimestamp()});
+  await sendTagNotifications(id,text,newTags,oldTags);
+};
+window.cancelEdit = id => {
+  const task=cachedTasks.find(t=>t.id===id); if(!task) return;
+  document.getElementById(`task-${id}`).outerHTML=taskHTML(task);
+};
+window.addTask = async () => {
+  const inp=document.getElementById('new-task-input'), ti=document.getElementById('new-tag-input');
+  if(ti.value.trim().includes('@')){addNewTag(ti.value);ti.value='';}
+  const text=inp.value.trim(); if(!text||!currentUser) return;
+  inp.value=''; const tags=[...newTaskTags]; newTaskTags=[]; renderNewTags();
+  const ref=await addDoc(collection(db,'tasks'),{uid:currentUser.uid,text,tags,done:false,createdAt:serverTimestamp()});
+  await sendTagNotifications(ref.id,text,tags,[]);
+};
+window.toggleTask = async (id,done) => updateDoc(doc(db,'tasks',id),{done:!done});
+window.deleteTask = async id => {
+  if(!confirm('Delete this task?')) return;
+  await deleteDoc(doc(db,'tasks',id));
+};
+window.setFilter = (f,btn) => {
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderTasks(cachedTasks);
+};
+document.getElementById('new-task-input').addEventListener('keydown',e=>{if(e.key==='Enter')window.addTask();});
+document.getElementById('login-password').addEventListener('keydown',e=>{if(e.key==='Enter')window.handleLogin();});
+
+// ══════════════════════════════════
+//  DIRECT MESSAGES
+//  Conversations: /conversations/{convId}
+//    members: [emailA, emailB] (sorted)
+//    lastMessage, lastAt, unread_{emailA}, unread_{emailB}
+//  Messages: /conversations/{convId}/messages/{msgId}
+//    from, text, createdAt
+// ══════════════════════════════════
+
+function convId(emailA, emailB) {
+  return [emailA, emailB].map(e=>e.toLowerCase()).sort().join('__');
+}
+
+function loadConversations() {
+  const myEmail = currentUser.email.toLowerCase();
+  const q = query(collection(db,'conversations'), where('members','array-contains', myEmail), orderBy('lastAt','desc'));
+  unsubscribeConvs = onSnapshot(q, snap => {
+    const convs = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderConvList(convs, myEmail);
+  });
+}
+
+function renderConvList(convs, myEmail) {
+  const el = document.getElementById('conv-list');
+  // Total unread DMs for badge
+  let totalUnread = 0;
+  convs.forEach(c => { totalUnread += (c[`unread_${myEmail.replace('@','_').replace('.','_')}`]||0); });
+  const dmBadge = document.getElementById('dm-badge');
+  if (totalUnread > 0) { dmBadge.textContent = totalUnread>9?'9+':totalUnread; dmBadge.style.display='flex'; }
+  else { dmBadge.style.display='none'; }
+
+  if (!convs.length) { el.innerHTML='<div class="conv-empty">No conversations yet.<br>Hit + to start one.</div>'; return; }
+  el.innerHTML = convs.map(c => {
+    const other = c.members.find(m=>m!==myEmail) || '';
+    const unreadKey = `unread_${myEmail.replace('@','_').replace(/\./g,'_')}`;
+    const unread = c[unreadKey] || 0;
+    const preview = c.lastMessage ? escapeHtml(c.lastMessage.substring(0,40)) : 'No messages yet';
+    const initial = (other[0]||'?').toUpperCase();
+    return `<div class="conv-item ${activeConvId===c.id?'active':''}" onclick="openConv('${c.id}','${escapeHtml(other)}')">
+      <div class="conv-avatar">${initial}</div>
+      <div class="conv-info">
+        <div class="conv-email">${escapeHtml(other)}</div>
+        <div class="conv-preview">${preview}</div>
+      </div>
+      ${unread>0?`<div class="conv-unread-badge">${unread>9?'9+':unread}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+window.openConv = async (cid, otherEmail) => {
+  activeConvId = cid;
+  // Re-render sidebar to show active state
+  if (unsubscribeConvs) { unsubscribeConvs(); }
+  loadConversations();
+
+  // Mark unread as 0
+  const myEmail = currentUser.email.toLowerCase();
+  const unreadKey = `unread_${myEmail.replace('@','_').replace(/\./g,'_')}`;
+  await updateDoc(doc(db,'conversations',cid), { [unreadKey]: 0 });
+
+  // Render chat header
+  const area = document.getElementById('chat-area');
+  const initial = (otherEmail[0]||'?').toUpperCase();
+  area.innerHTML = `
+    <div class="chat-header">
+      <div class="chat-avatar">${initial}</div>
+      <div>
+        <div class="chat-with">${escapeHtml(otherEmail)}</div>
+        <div class="chat-with-sub">Direct Message</div>
+      </div>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-area">
+      <textarea id="chat-input" placeholder="Write a message…" rows="1"></textarea>
+      <button class="btn-send" onclick="sendMessage('${cid}','${escapeHtml(otherEmail)}')" title="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>`;
+
+  // Auto-resize textarea
+  const ta = document.getElementById('chat-input');
+  ta.addEventListener('input', () => { ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,120)+'px'; });
+  ta.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage(cid,otherEmail);} });
+
+  // Load messages
+  if (unsubscribeMessages) unsubscribeMessages();
+  const q = query(collection(db,'conversations',cid,'messages'), orderBy('createdAt','asc'));
+  unsubscribeMessages = onSnapshot(q, snap => {
+    const msgs = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderMessages(msgs);
+  });
+};
+
+function renderMessages(msgs) {
+  const el = document.getElementById('chat-messages'); if(!el) return;
+  const myEmail = currentUser.email.toLowerCase();
+  if (!msgs.length) { el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:2rem;font-weight:300">No messages yet. Say hello! 👋</div>'; return; }
+
+  let html = ''; let lastDate = '';
+  msgs.forEach(m => {
+    const isMe = m.from === myEmail;
+    const date = m.createdAt?.toDate();
+    const dateLabel = date ? formatDateLabel(date) : '';
+    if (dateLabel && dateLabel !== lastDate) {
+      html += `<div class="msg-date-divider">${dateLabel}</div>`;
+      lastDate = dateLabel;
+    }
+    const timeStr = date ? formatTime(date) : '';
+    html += `<div class="msg-bubble-row ${isMe?'me':''}">
+      <div class="msg-bubble ${isMe?'me':'them'}">${escapeHtml(m.text)}</div>
+      <span class="msg-time">${timeStr}</span>
+    </div>`;
+  });
+  el.innerHTML = html;
+  el.scrollTop = el.scrollHeight;
+}
+
+window.sendMessage = async (cid, otherEmail) => {
+  const ta = document.getElementById('chat-input');
+  const text = ta?.value.trim(); if (!text) return;
+  ta.value=''; ta.style.height='auto';
+  const myEmail = currentUser.email.toLowerCase();
+  const otherUnreadKey = `unread_${otherEmail.replace('@','_').replace(/\./g,'_')}`;
+
+  await addDoc(collection(db,'conversations',cid,'messages'), { from: myEmail, text, createdAt: serverTimestamp() });
+  await setDoc(doc(db,'conversations',cid), {
+    members: [myEmail, otherEmail].sort(),
+    lastMessage: text, lastAt: serverTimestamp(),
+    [otherUnreadKey]: (await getUnreadCount(cid, otherEmail)) + 1
+  }, { merge: true });
+};
+
+async function getUnreadCount(cid, email) {
+  try {
+    const key = `unread_${email.replace('@','_').replace(/\./g,'_')}`;
+    const d = await getDoc(doc(db,'conversations',cid));
+    return d.exists() ? (d.data()[key]||0) : 0;
+  } catch { return 0; }
+}
+
+// New DM modal
+window.openNewDmModal = () => {
+  document.getElementById('new-dm-modal').classList.add('open');
+  setTimeout(() => document.getElementById('dm-recipient-input').focus(), 50);
+};
+window.closeNewDmModal = () => {
+  document.getElementById('new-dm-modal').classList.remove('open');
+  document.getElementById('dm-recipient-input').value='';
+};
+window.startNewDm = async () => {
+  const email = document.getElementById('dm-recipient-input').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) { showToast('Please enter a valid email'); return; }
+  if (email === currentUser.email.toLowerCase()) { showToast("You can't message yourself"); return; }
+  closeNewDmModal();
+  const cid = convId(currentUser.email, email);
+  // Ensure conversation doc exists
+  await setDoc(doc(db,'conversations',cid), {
+    members: [currentUser.email.toLowerCase(), email].sort(),
+    lastMessage: '', lastAt: serverTimestamp()
+  }, { merge: true });
+  switchPage('messages');
+  openConv(cid, email);
+};
+
+// Close modal on overlay click
+document.getElementById('new-dm-modal').addEventListener('click', e => {
+  if(e.target===document.getElementById('new-dm-modal')) closeNewDmModal();
+});
+document.getElementById('dm-recipient-input').addEventListener('keydown', e => {
+  if(e.key==='Enter') window.startNewDm();
+  if(e.key==='Escape') closeNewDmModal();
+});
+
 </script>
 </body>
 </html>
