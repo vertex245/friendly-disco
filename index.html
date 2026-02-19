@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taskline — Your Personal Todo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #f5f0e8;
+    --cream: #ede7d9;
+    --accent: #c0392b;
+    --accent-light: #e74c3c;
+    --muted: #8a8070;
+    --border: #d4c9b8;
+    --card: #faf7f2;
+    --shadow: 0 2px 20px rgba(26,26,46,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* Texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── AUTH SCREEN ─── */
+  #auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .auth-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 3rem 3.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow), 6px 6px 0 var(--cream);
+  }
+
+  .brand {
+    margin-bottom: 2.5rem;
+  }
+
+  .brand h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .brand span {
+    color: var(--accent);
+  }
+
+  .brand p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  .tab-row {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.8rem;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 0.6rem 1.2rem 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+  }
+
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.75rem 1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus { border-color: var(--accent); }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.85rem 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    margin-top: 0.5rem;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-primary:hover { background: var(--accent-light); }
+  .btn-primary:active { transform: translateY(1px); }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .btn-google {
+    width: 100%;
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 0.8rem 1.5rem;
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .btn-google:hover { background: var(--cream); border-color: var(--muted); }
+
+  .error-msg {
+    background: #fdf0ef;
+    border-left: 3px solid var(--accent);
+    padding: 0.7rem 1rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    border-radius: 0 2px 2px 0;
+    display: none;
+  }
+
+  /* ─── APP SCREEN ─── */
+  #app-screen {
+    display: none;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .header-brand span { color: var(--accent); }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .user-avatar {
+    width: 34px;
+    height: 34px;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--muted);
+    overflow: hidden;
+  }
+
+  .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .user-email {
+    font-size: 0.82rem;
+    color: var(--muted);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .btn-signout {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.9rem;
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+
+  .btn-signout:hover { border-color: var(--accent); color: var(--accent); }
+
+  main {
+    max-width: 640px;
+    margin: 3rem auto;
+    padding: 0 1.5rem;
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+
+  .page-subtitle {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin-bottom: 2rem;
+    font-weight: 300;
+  }
+
+  /* Add task */
+  .add-task-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .add-task-row input {
+    flex: 1;
+    border-radius: 2px;
+  }
+
+  .btn-add {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.4rem;
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-add:hover { background: var(--accent-light); }
+  .btn-add:active { transform: translateY(1px); }
+
+  /* Filters */
+  .filter-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-btn {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-btn.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+  }
+
+  /* Tasks */
+  #tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .task-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    animation: slideIn 0.25s ease;
+    position: relative;
+    transition: opacity 0.2s;
+  }
+
+  .task-item.done { opacity: 0.55; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-check {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: transparent;
+  }
+
+  .task-check:hover { border-color: var(--accent); }
+  .task-item.done .task-check { background: var(--accent); border-color: var(--accent); }
+  .task-item.done .task-check::after { content: '✓'; color: #fff; font-size: 11px; font-weight: 700; }
+
+  .task-text {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  .task-item.done .task-text { text-decoration: line-through; color: var(--muted); }
+
+  .task-date {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  .task-delete {
+    background: none;
+    border: none;
+    color: var(--border);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    flex-shrink: 0;
+    transition: color 0.2s;
+    line-height: 1;
+    margin-top: 1px;
+  }
+
+  .task-delete:hover { color: var(--accent); }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+
+  .empty-state .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .empty-state p { font-size: 0.9rem; font-weight: 300; }
+
+  .stats-bar {
+    display: flex;
+    gap: 2rem;
+    padding: 1.2rem 0;
+    border-top: 1px solid var(--border);
+    margin-top: 1.5rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .stat strong { color: var(--ink); font-size: 1.1rem; display: block; font-family: 'Playfair Display', serif; }
+
+  .loading {
+    display: flex;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* CONFIG notice */
+  .config-notice {
+    background: #fffbea;
+    border: 1px solid #f0c060;
+    padding: 1.2rem 1.5rem;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #7a5c00;
+    display: none;
+  }
+
+  .config-notice code {
+    background: rgba(0,0,0,0.07);
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.82rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="config-notice" id="config-notice">
+      ⚙️ <strong>Firebase config needed.</strong> Open this file and replace the <code>firebaseConfig</code> object near the bottom of the <code>&lt;script&gt;</code> tag with your own Firebase project credentials.
+      Get them from <strong>Firebase Console → Project Settings → Your Apps → SDK Setup</strong>.
+    </div>
+
+    <div class="brand">
+      <h1>Task<span>line</span></h1>
+      <p>Your personal task manager — sign in to begin.</p>
+    </div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Sign in</button>
+      <button class="tab-btn" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <div id="auth-error" class="error-msg"></div>
+
+    <!-- Login -->
+    <div id="login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" onclick="handleLogin()">Sign in</button>
+
+      <div class="divider">or</div>
+      <button class="btn-google" onclick="handleGoogle()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+
+    <!-- Register -->
+    <div id="register-form" style="display:none">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Min. 6 characters">
+      </div>
+      <button class="btn-primary" onclick="handleRegister()">Create account</button>
+
+      <div class="divider">or</div>
+      <button class="btn-google" onclick="handleGoogle()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen">
+  <header>
+    <div class="header-brand">Task<span>line</span></div>
+    <div class="user-info">
+      <div class="user-avatar" id="user-avatar"></div>
+      <span class="user-email" id="user-email-display"></span>
+      <button class="btn-signout" onclick="handleSignOut()">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <h2 class="page-title" id="greeting">Good morning</h2>
+    <p class="page-subtitle">Here's what's on your list today.</p>
+
+    <div class="add-task-row">
+      <input type="text" id="new-task-input" placeholder="Add a new task..." maxlength="200">
+      <button class="btn-add" onclick="addTask()">+ Add</button>
+    </div>
+
+    <div class="filter-row">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" data-filter="active" onclick="setFilter('active', this)">Active</button>
+      <button class="filter-btn" data-filter="done" onclick="setFilter('done', this)">Done</button>
+    </div>
+
+    <div id="tasks-list">
+      <div class="loading">Loading your tasks…</div>
+    </div>
+
+    <div class="stats-bar" id="stats-bar" style="display:none">
+      <div class="stat"><strong id="stat-total">0</strong>Total</div>
+      <div class="stat"><strong id="stat-done">0</strong>Completed</div>
+      <div class="stat"><strong id="stat-active">0</strong>Remaining</div>
+    </div>
+  </main>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import {
+    getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import {
+    getFirestore, collection, addDoc, query, where, orderBy,
+    onSnapshot, updateDoc, deleteDoc, doc, serverTimestamp
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  // ══════════════════════════════════════════════════
+  //  🔧 REPLACE THIS WITH YOUR OWN FIREBASE CONFIG
+  // ══════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey: "AIzaSyCG6MpOYSF_NRhUj6UER40yWILubNQI5EE",
+    authDomain: "todo-67067.firebaseapp.com",
+    projectId: "todo-67067",
+    storageBucket: "todo-67067.firebasestorage.app",
+    messagingSenderId: "731409843570",
+    appId: "1:731409843570:web:1786fd1e738086871ac9eb",
+    measurementId: "G-QXVJD5HW49"
+  };
+  // ══════════════════════════════════════════════════
+
+  // Detect placeholder config
+  const isPlaceholder = firebaseConfig.apiKey === "YOUR_API_KEY";
+  if (isPlaceholder) {
+    document.getElementById('config-notice').style.display = 'block';
+  }
+
+  const app = isPlaceholder ? null : initializeApp(firebaseConfig);
+  const auth = isPlaceholder ? null : getAuth(app);
+  const db = isPlaceholder ? null : getFirestore(app);
+  const googleProvider = isPlaceholder ? null : new GoogleAuthProvider();
+
+  let currentUser = null;
+  let currentFilter = 'all';
+  let unsubscribeTasks = null;
+
+  // ─── Auth state ───
+  if (auth) {
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        currentUser = user;
+        showApp(user);
+      } else {
+        currentUser = null;
+        showAuth();
+      }
+    });
+  }
+
+  function showApp(user) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+
+    // Avatar
+    const avatar = document.getElementById('user-avatar');
+    if (user.photoURL) {
+      avatar.innerHTML = `<img src="${user.photoURL}" alt="">`;
+    } else {
+      avatar.textContent = (user.email || 'U')[0].toUpperCase();
+    }
+    document.getElementById('user-email-display').textContent = user.displayName || user.email;
+
+    // Greeting
+    const h = new Date().getHours();
+    const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('greeting').textContent = g + (user.displayName ? `, ${user.displayName.split(' ')[0]}` : '');
+
+    loadTasks();
+  }
+
+  function showAuth() {
+    document.getElementById('app-screen').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'flex';
+    if (unsubscribeTasks) { unsubscribeTasks(); unsubscribeTasks = null; }
+  }
+
+  // ─── Auth actions (exposed globally) ───
+  window.switchTab = (tab) => {
+    document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(tab === 'login' ? 'sign' : 'reg')));
+    clearError();
+  };
+
+  window.handleLogin = async () => {
+    if (isPlaceholder) { showError('Please add your Firebase config first.'); return; }
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (e) {
+      showError(friendlyError(e.code));
+    }
+  };
+
+  window.handleRegister = async () => {
+    if (isPlaceholder) { showError('Please add your Firebase config first.'); return; }
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (e) {
+      showError(friendlyError(e.code));
+    }
+  };
+
+  window.handleGoogle = async () => {
+    if (isPlaceholder) { showError('Please add your Firebase config first.'); return; }
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (e) {
+      showError(friendlyError(e.code));
+    }
+  };
+
+  window.handleSignOut = async () => {
+    await signOut(auth);
+  };
+
+  function showError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function clearError() {
+    document.getElementById('auth-error').style.display = 'none';
+  }
+
+  function friendlyError(code) {
+    const map = {
+      'auth/user-not-found': 'No account found with that email.',
+      'auth/wrong-password': 'Incorrect password.',
+      'auth/email-already-in-use': 'Email already in use.',
+      'auth/weak-password': 'Password must be at least 6 characters.',
+      'auth/invalid-email': 'Please enter a valid email.',
+      'auth/popup-closed-by-user': 'Sign-in popup was closed.',
+      'auth/network-request-failed': 'Network error. Check your connection.',
+    };
+    return map[code] || 'Something went wrong. Please try again.';
+  }
+
+  // ─── Tasks ───
+  function loadTasks() {
+    const listEl = document.getElementById('tasks-list');
+    listEl.innerHTML = '<div class="loading">Loading your tasks…</div>';
+
+    const q = query(
+      collection(db, 'tasks'),
+      where('uid', '==', currentUser.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    unsubscribeTasks = onSnapshot(q, (snapshot) => {
+      const tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderTasks(tasks);
+    });
+  }
+
+  function renderTasks(tasks) {
+    const listEl = document.getElementById('tasks-list');
+    const filtered = tasks.filter(t => {
+      if (currentFilter === 'active') return !t.done;
+      if (currentFilter === 'done') return t.done;
+      return true;
+    });
+
+    // Stats
+    document.getElementById('stats-bar').style.display = tasks.length ? 'flex' : 'none';
+    document.getElementById('stat-total').textContent = tasks.length;
+    document.getElementById('stat-done').textContent = tasks.filter(t => t.done).length;
+    document.getElementById('stat-active').textContent = tasks.filter(t => !t.done).length;
+
+    if (!filtered.length) {
+      listEl.innerHTML = `<div class="empty-state">
+        <span class="icon">${currentFilter === 'done' ? '🎉' : '✏️'}</span>
+        <p>${currentFilter === 'done' ? 'No completed tasks yet.' : currentFilter === 'active' ? 'All caught up!' : 'Add your first task above.'}</p>
+      </div>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(task => {
+      const date = task.createdAt?.toDate();
+      const dateStr = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+      return `<div class="task-item ${task.done ? 'done' : ''}" id="task-${task.id}">
+        <div class="task-check" onclick="toggleTask('${task.id}', ${task.done})"></div>
+        <div style="flex:1">
+          <div class="task-text">${escapeHtml(task.text)}</div>
+          ${dateStr ? `<div class="task-date">${dateStr}</div>` : ''}
+        </div>
+        <button class="task-delete" onclick="deleteTask('${task.id}')" title="Delete">×</button>
+      </div>`;
+    }).join('');
+  }
+
+  window.addTask = async () => {
+    const input = document.getElementById('new-task-input');
+    const text = input.value.trim();
+    if (!text || !currentUser) return;
+    input.value = '';
+    await addDoc(collection(db, 'tasks'), {
+      uid: currentUser.uid,
+      text,
+      done: false,
+      createdAt: serverTimestamp()
+    });
+  };
+
+  window.toggleTask = async (id, currentDone) => {
+    await updateDoc(doc(db, 'tasks', id), { done: !currentDone });
+  };
+
+  window.deleteTask = async (id) => {
+    await deleteDoc(doc(db, 'tasks', id));
+  };
+
+  window.setFilter = (filter, btn) => {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Re-render from cache — trigger snapshot re-delivery not needed, just re-render last state
+    const q = query(collection(db, 'tasks'), where('uid', '==', currentUser.uid), orderBy('createdAt', 'desc'));
+    if (unsubscribeTasks) unsubscribeTasks();
+    unsubscribeTasks = onSnapshot(q, snap => {
+      renderTasks(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+  };
+
+  // Enter key on new task
+  document.getElementById('new-task-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.addTask();
+  });
+
+  // Enter on auth
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.handleLogin();
+  });
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
