@@ -479,6 +479,62 @@ header {
 
 .feed-loading { display: flex; justify-content: center; padding: 3rem; color: var(--muted); font-size: 0.88rem; }
 
+
+/* ── Task priority tags ── */
+.task-priority {
+  display: inline-flex; align-items: center; border-radius: 20px;
+  padding: 0.1rem 0.55rem; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+}
+.task-priority.high { background: #fdecea; color: #c0392b; border: 1px solid #f5c6c2; }
+.task-priority.medium { background: #fff8e1; color: #b07000; border: 1px solid #ffe082; }
+.task-priority.low { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+
+.priority-select {
+  background: var(--paper); border: 1px solid var(--border); border-radius: 2px;
+  padding: 0.35rem 0.6rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+  color: var(--muted); cursor: pointer; outline: none; transition: border-color 0.2s;
+  width: auto;
+}
+.priority-select:focus { border-color: var(--accent); }
+
+/* ── Reactions ── */
+.reactions-bar { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.6rem; align-items: center; }
+.reaction-btn {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  background: var(--cream); border: 1px solid var(--border); border-radius: 20px;
+  padding: 0.18rem 0.6rem; font-size: 0.82rem; cursor: pointer;
+  transition: all 0.15s; font-family: 'DM Sans', sans-serif; color: var(--ink);
+}
+.reaction-btn:hover { border-color: var(--accent); background: #fdf0ef; }
+.reaction-btn.mine { background: var(--tag-bg); border-color: var(--tag-border); color: var(--tag-color); font-weight: 600; }
+.reaction-count { font-size: 0.75rem; font-weight: 500; }
+
+.reaction-picker {
+  position: relative; display: inline-block;
+}
+.reaction-picker-btn {
+  background: none; border: 1px dashed var(--border); border-radius: 20px;
+  padding: 0.18rem 0.6rem; font-size: 0.82rem; cursor: pointer; color: var(--muted);
+  transition: all 0.15s;
+}
+.reaction-picker-btn:hover { border-color: var(--accent); color: var(--accent); }
+.emoji-popup {
+  position: absolute; bottom: calc(100% + 6px); left: 0;
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.5rem; display: none; gap: 0.25rem; flex-wrap: wrap; width: 200px;
+  box-shadow: var(--shadow-lg); z-index: 50; animation: dropDown 0.15s ease;
+}
+.emoji-popup.open { display: flex; }
+.emoji-opt {
+  background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0.2rem;
+  border-radius: 4px; transition: background 0.1s; line-height: 1;
+}
+.emoji-opt:hover { background: var(--cream); }
+
+/* ── DM notification in bell panel ── */
+.notif-item.dm { }
+.notif-item.dm .notif-from { color: var(--accent); }
+
 </style>
 </head>
 <body>
@@ -529,7 +585,7 @@ header {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </button>
         <div class="notif-panel" id="notif-panel">
-          <div class="notif-header"><h3>Tag Notifications</h3><button class="notif-mark-all" onclick="markAllRead()">Mark all read</button></div>
+          <div class="notif-header"><h3>Notifications</h3><button class="notif-mark-all" onclick="markAllRead()">Mark all read</button></div>
           <div class="notif-list" id="notif-list"><div class="notif-empty"><span class="icon">🔔</span><p>No notifications yet</p></div></div>
         </div>
       </div>
@@ -553,6 +609,15 @@ header {
           <input type="text" class="tag-text-input" id="new-tag-input" placeholder="Tag people by email (press Enter or comma)…">
         </div>
         <p class="tag-hint">Type an email and press <strong>Enter</strong> or <strong>,</strong> to tag someone</p>
+        <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.6rem;">
+          <label style="font-size:0.75rem;margin:0;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Priority</label>
+          <select class="priority-select" id="new-task-priority">
+            <option value="none">None</option>
+            <option value="low">🟢 Low</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="high">🔴 High</option>
+          </select>
+        </div>
       </div>
       <div class="filter-row">
         <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
@@ -815,11 +880,15 @@ function renderNotifications(notifs) {
   if (!notifs.length) { list.innerHTML=`<div class="notif-empty"><span class="icon">🔔</span><p>No notifications yet</p></div>`; return; }
   list.innerHTML = notifs.map(n => {
     const ts = n.createdAt ? timeAgo(n.createdAt.toDate()) : '';
-    return `<div class="notif-item ${n.read?'':'unread'}" onclick="handleNotifClick('${n.id}')">
+    const isDM = n.type === 'dm';
+    const icon = isDM ? '💬' : '📌';
+    const action = isDM ? 'Sent you a message' : 'Tagged you on a task';
+    const preview = n.taskText ? `"${escapeHtml(n.taskText.substring(0,60))}"` : '';
+    return `<div class="notif-item ${isDM?'dm':''} ${n.read?'':'unread'}" onclick="handleNotifClick('${n.id}','${n.type||'tag'}','${n.convId||''}')">
       ${!n.read?'<div class="unread-dot"></div>':''}
-      <div class="notif-item-header"><span class="notif-from">📌 ${escapeHtml(n.fromEmail)}</span><span class="notif-time">${ts}</span></div>
-      <div class="notif-task-text">"${escapeHtml(n.taskText)}"</div>
-      <div class="notif-action">Tagged you on a task</div>
+      <div class="notif-item-header"><span class="notif-from">${icon} ${escapeHtml(n.fromEmail)}</span><span class="notif-time">${ts}</span></div>
+      ${preview ? `<div class="notif-task-text">${preview}</div>` : ''}
+      <div class="notif-action">${action}</div>
     </div>`;
   }).join('');
 }
@@ -828,9 +897,19 @@ document.addEventListener('click', e => {
   if (!document.querySelector('.notif-wrapper')?.contains(e.target))
     document.getElementById('notif-panel').classList.remove('open');
 });
-window.handleNotifClick = async id => {
+window.handleNotifClick = async (id, type, convId) => {
   await updateDoc(doc(db,'notifications',id), {read:true});
   document.getElementById('notif-panel').classList.remove('open');
+  if (type === 'dm' && convId) {
+    // Find the other person from the conversation
+    try {
+      const convSnap = await getDoc(doc(db,'conversations',convId));
+      if (convSnap.exists()) {
+        const other = convSnap.data().members.find(m => m !== currentUser.email.toLowerCase());
+        if (other) { switchPage('messages'); openConv(convId, other); }
+      }
+    } catch(e) { console.warn('Could not open DM from notification', e); }
+  }
 };
 window.markAllRead = async () => {
   const unread = cachedNotifs.filter(n=>!n.read);
@@ -875,12 +954,14 @@ function taskHTML(task) {
   const date = task.createdAt?.toDate();
   const dateStr = date ? date.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
   const tags = (task.tags||[]).map(t=>`<span class="task-tag">${escapeHtml(t)}</span>`).join('');
+  const p = task.priority;
+  const priorityBadge = p && p !== 'none' ? `<span class="task-priority ${p}">${p === 'high' ? '🔴 High' : p === 'medium' ? '🟡 Medium' : '🟢 Low'}</span>` : '';
   return `<div class="task-item ${task.done?'done':''}" id="task-${task.id}">
     <div class="task-main-row">
       <div class="task-check" onclick="toggleTask('${task.id}',${!!task.done})"></div>
       <div class="task-body">
         <div class="task-text">${escapeHtml(task.text)}</div>
-        <div class="task-meta">${dateStr?`<span class="task-date">${dateStr}</span>`:''}${tags}</div>
+        <div class="task-meta">${dateStr?`<span class="task-date">${dateStr}</span>`:''}${priorityBadge}${tags}</div>
       </div>
       <div class="task-actions">
         <button class="task-btn" onclick="startEdit('${task.id}')">✎ Edit</button>
@@ -898,6 +979,7 @@ window.startEdit = id => {
     if(!c||!inp) return; c.querySelectorAll('.tag-chip').forEach(x=>x.remove());
     editTags.forEach((e,i) => c.insertBefore(makeChip(e,()=>{editTags.splice(i,1);renderEditChips();}), inp));
   }
+  const curPriority = task.priority || 'none';
   item.innerHTML=`<div class="task-main-row">
     <div class="task-check" style="${task.done?'background:var(--accent);border-color:var(--accent)':''}">
       ${task.done?'<span style="color:#fff;font-size:11px;font-weight:700">✓</span>':''}
@@ -906,6 +988,15 @@ window.startEdit = id => {
       <input class="task-edit-input" id="edit-input-${id}" type="text" value="${escapeHtml(task.text)}" maxlength="300">
       <div class="edit-tags-row" id="edit-tags-${id}" onclick="document.getElementById('edit-tag-input-${id}').focus()">
         <input type="text" class="tag-text-input" id="edit-tag-input-${id}" placeholder="Tag people by email…" style="min-width:140px;font-family:'DM Sans',sans-serif;color:var(--ink)">
+      </div>
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.5rem;">
+        <label style="font-size:0.75rem;margin:0;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Priority</label>
+        <select class="priority-select" id="edit-priority-${id}">
+          <option value="none" ${curPriority==='none'?'selected':''}>None</option>
+          <option value="low" ${curPriority==='low'?'selected':''}>🟢 Low</option>
+          <option value="medium" ${curPriority==='medium'?'selected':''}>🟡 Medium</option>
+          <option value="high" ${curPriority==='high'?'selected':''}>🔴 High</option>
+        </select>
       </div>
       <div class="edit-save-row">
         <button class="btn-save" onclick="saveEdit('${id}')">Save</button>
@@ -930,7 +1021,8 @@ window.saveEdit = async id => {
   const ti=document.getElementById(`edit-tag-input-${id}`);
   if(ti?.value.trim().includes('@')){const v=ti.value.trim().toLowerCase();if(!item._editTags.includes(v))item._editTags.push(v);}
   const newTags=item._editTags||[], oldTags=item._originalTags||[];
-  await updateDoc(doc(db,'tasks',id),{text,tags:newTags,updatedAt:serverTimestamp()});
+  const priority = document.getElementById(`edit-priority-${id}`)?.value || 'none';
+  await updateDoc(doc(db,'tasks',id),{text,tags:newTags,priority,updatedAt:serverTimestamp()});
   await sendTagNotifications(id,text,newTags,oldTags);
 };
 window.cancelEdit = id => {
@@ -941,8 +1033,10 @@ window.addTask = async () => {
   const inp=document.getElementById('new-task-input'), ti=document.getElementById('new-tag-input');
   if(ti.value.trim().includes('@')){addNewTag(ti.value);ti.value='';}
   const text=inp.value.trim(); if(!text||!currentUser) return;
-  inp.value=''; const tags=[...newTaskTags]; newTaskTags=[]; renderNewTags();
-  const ref=await addDoc(collection(db,'tasks'),{uid:currentUser.uid,text,tags,done:false,createdAt:serverTimestamp()});
+  const priority = document.getElementById('new-task-priority')?.value || 'none';
+  inp.value=''; document.getElementById('new-task-priority').value='none';
+  const tags=[...newTaskTags]; newTaskTags=[]; renderNewTags();
+  const ref=await addDoc(collection(db,'tasks'),{uid:currentUser.uid,text,tags,priority,done:false,createdAt:serverTimestamp()});
   await sendTagNotifications(ref.id,text,tags,[]);
 };
 window.toggleTask = async (id,done) => updateDoc(doc(db,'tasks',id),{done:!done});
@@ -989,10 +1083,13 @@ function renderConvList(convs, myEmail) {
   if (totalUnread > 0) { dmBadge.textContent = totalUnread>9?'9+':totalUnread; dmBadge.style.display='flex'; }
   else { dmBadge.style.display='none'; }
 
-  if (!convs.length) { el.innerHTML='<div class="conv-empty">No conversations yet.<br>Hit + to start one.</div>'; return; }
-  el.innerHTML = convs.map(c => {
+  // Build list: active convs + saved contacts not yet in Firestore
+  const convEmails = new Set(convs.map(c => c.members.find(m=>m!==myEmail)||''));
+  const savedContacts = getSavedContacts().filter(e => !convEmails.has(e));
+
+  const convItems = convs.map(c => {
     const other = c.members.find(m=>m!==myEmail) || '';
-    const unreadKey = `unread_${myEmail.replace('@','_').replace(/\./g,'_')}`;
+    const unreadKey = `unread_${myEmail.replace('@','_').replace(/\.+/g,'_')}`;
     const unread = c[unreadKey] || 0;
     const preview = c.lastMessage ? escapeHtml(c.lastMessage.substring(0,40)) : 'No messages yet';
     const initial = (other[0]||'?').toUpperCase();
@@ -1005,10 +1102,26 @@ function renderConvList(convs, myEmail) {
       ${unread>0?`<div class="conv-unread-badge">${unread>9?'9+':unread}</div>`:''}
     </div>`;
   }).join('');
+
+  const savedItems = savedContacts.map(email => {
+    const cid = convId(myEmail, email);
+    const initial = (email[0]||'?').toUpperCase();
+    return `<div class="conv-item" onclick="openConv('${cid}','${escapeHtml(email)}')" style="opacity:0.7">
+      <div class="conv-avatar" style="background:var(--muted)">${initial}</div>
+      <div class="conv-info">
+        <div class="conv-email">${escapeHtml(email)}</div>
+        <div class="conv-preview">Start a conversation</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if (!convItems && !savedItems) { el.innerHTML='<div class="conv-empty">No conversations yet.<br>Hit + to start one.</div>'; return; }
+  el.innerHTML = convItems + (savedItems ? `<div style="padding:0.5rem 1.1rem;font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;border-top:1px solid var(--border);margin-top:0.5rem">Recent</div>${savedItems}` : '');
 }
 
 window.openConv = async (cid, otherEmail) => {
   activeConvId = cid;
+  saveContact(otherEmail);
   // Re-render sidebar to show active state
   if (unsubscribeConvs) { unsubscribeConvs(); }
   loadConversations();
@@ -1080,14 +1193,26 @@ window.sendMessage = async (cid, otherEmail) => {
   const text = ta?.value.trim(); if (!text) return;
   ta.value=''; ta.style.height='auto';
   const myEmail = currentUser.email.toLowerCase();
-  const otherUnreadKey = `unread_${otherEmail.replace('@','_').replace(/\./g,'_')}`;
+  const otherUnreadKey = `unread_${otherEmail.replace('@','_').replace(/\.+/g,'_')}`;
 
   await addDoc(collection(db,'conversations',cid,'messages'), { from: myEmail, text, createdAt: serverTimestamp() });
+  const newUnread = (await getUnreadCount(cid, otherEmail)) + 1;
   await setDoc(doc(db,'conversations',cid), {
     members: [myEmail, otherEmail].sort(),
     lastMessage: text, lastAt: serverTimestamp(),
-    [otherUnreadKey]: (await getUnreadCount(cid, otherEmail)) + 1
+    [otherUnreadKey]: newUnread
   }, { merge: true });
+
+  // Send notification to recipient
+  await addDoc(collection(db,'notifications'), {
+    toEmail: otherEmail,
+    fromEmail: myEmail,
+    type: 'dm',
+    taskText: text.substring(0, 80),
+    convId: cid,
+    read: false,
+    createdAt: serverTimestamp()
+  });
 };
 
 async function getUnreadCount(cid, email) {
@@ -1113,14 +1238,29 @@ window.startNewDm = async () => {
   if (email === currentUser.email.toLowerCase()) { showToast("You can't message yourself"); return; }
   closeNewDmModal();
   const cid = convId(currentUser.email, email);
-  // Ensure conversation doc exists
   await setDoc(doc(db,'conversations',cid), {
     members: [currentUser.email.toLowerCase(), email].sort(),
     lastMessage: '', lastAt: serverTimestamp()
   }, { merge: true });
+  saveContact(email);
   switchPage('messages');
   openConv(cid, email);
 };
+
+function saveContact(email) {
+  if (!currentUser) return;
+  const key = `taskline_contacts_${currentUser.uid}`;
+  let contacts = [];
+  try { contacts = JSON.parse(localStorage.getItem(key) || '[]'); } catch {}
+  if (!contacts.includes(email)) { contacts.unshift(email); contacts = contacts.slice(0, 20); }
+  localStorage.setItem(key, JSON.stringify(contacts));
+}
+
+function getSavedContacts() {
+  if (!currentUser) return [];
+  const key = `taskline_contacts_${currentUser.uid}`;
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+}
 
 // Close modal on overlay click
 document.getElementById('new-dm-modal').addEventListener('click', e => {
@@ -1182,9 +1322,6 @@ function renderFeed(posts) {
 
 function postHTML(post) {
   const myEmail = currentUser?.email?.toLowerCase() || '';
-  const likes = post.likes || [];
-  const liked = likes.includes(myEmail);
-  const likeCount = likes.length;
   const commentCount = post.commentCount || 0;
   const date = post.createdAt?.toDate();
   const timeStr = date ? timeAgo(date) : '';
@@ -1203,10 +1340,8 @@ function postHTML(post) {
       ${isOwn ? `<button class="post-menu-btn" onclick="deletePost('${post.id}')" title="Delete post">×</button>` : ''}
     </div>
     <div class="post-body">${escapeHtml(post.text)}</div>
+    <div class="reactions-bar" id="reactions-${post.id}">${buildReactionsHTML(post, myEmail)}</div>
     <div class="post-actions">
-      <button class="post-action-btn ${liked ? 'liked' : ''}" onclick="toggleLike('${post.id}', ${liked})">
-        ${liked ? '❤️' : '🤍'} <span class="post-action-count">${likeCount || ''}</span>
-      </button>
       <button class="post-action-btn" onclick="toggleComments('${post.id}')">
         💬 <span class="post-action-count" id="cc-${post.id}">${commentCount || ''}</span>
       </button>
@@ -1242,14 +1377,56 @@ window.submitPost = async () => {
   btn.disabled = false; btn.textContent = 'Post';
 };
 
-window.toggleLike = async (postId, currentlyLiked) => {
+const EMOJIS = ['❤️','😂','😮','😢','👍','🔥','🎉','👀'];
+
+function buildReactionsHTML(post, myEmail) {
+  const reactions = post.reactions || {};
+  let html = '';
+  for (const emoji of Object.keys(reactions)) {
+    const users = reactions[emoji] || [];
+    if (!users.length) continue;
+    const mine = users.includes(myEmail);
+    html += `<button class="reaction-btn ${mine ? 'mine' : ''}" onclick="toggleReaction('${post.id}','${emoji}')" title="${users.join(', ')}">
+      ${emoji} <span class="reaction-count">${users.length}</span>
+    </button>`;
+  }
+  html += `<div class="reaction-picker">
+    <button class="reaction-picker-btn" onclick="toggleEmojiPicker('${post.id}')" title="Add reaction">＋ 😊</button>
+    <div class="emoji-popup" id="emoji-popup-${post.id}">
+      ${EMOJIS.map(e => `<button class="emoji-opt" onclick="pickEmoji('${post.id}','${e}')">${e}</button>`).join('')}
+    </div>
+  </div>`;
+  return html;
+}
+
+window.toggleEmojiPicker = postId => {
+  // Close all others first
+  document.querySelectorAll('.emoji-popup').forEach(p => {
+    if (p.id !== `emoji-popup-${postId}`) p.classList.remove('open');
+  });
+  document.getElementById(`emoji-popup-${postId}`)?.classList.toggle('open');
+};
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.reaction-picker')) {
+    document.querySelectorAll('.emoji-popup').forEach(p => p.classList.remove('open'));
+  }
+});
+
+window.pickEmoji = async (postId, emoji) => {
+  document.getElementById(`emoji-popup-${postId}`)?.classList.remove('open');
+  await toggleReaction(postId, emoji);
+};
+
+window.toggleReaction = async (postId, emoji) => {
   const myEmail = currentUser?.email?.toLowerCase(); if (!myEmail) return;
   const ref = doc(db, 'posts', postId);
-  if (currentlyLiked) {
-    await updateDoc(ref, { likes: arrayRemove(myEmail) });
-  } else {
-    await updateDoc(ref, { likes: arrayUnion(myEmail) });
-  }
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const reactions = snap.data().reactions || {};
+  const users = reactions[emoji] || [];
+  const newUsers = users.includes(myEmail) ? users.filter(u => u !== myEmail) : [...users, myEmail];
+  await updateDoc(ref, { [`reactions.${emoji}`]: newUsers });
 };
 
 window.deletePost = async postId => {
